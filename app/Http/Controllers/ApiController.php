@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -48,18 +49,19 @@ class ApiController extends Controller
         ]);
 
         if (!empty($token)) {
-
+            $user_details = Auth::user();
             return response()->json([
                 "status" => true,
                 "message" => "User logged in succcessfully",
-                "token" => $token
-            ]);
+                "token" => $token,
+                "user" => $user_details,
+            ], 200);
         }
 
         return response()->json([
             "status" => false,
             "message" => "Invalid details"
-        ]);
+        ], 401);
     }
 
     public function profile()

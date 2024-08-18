@@ -15,12 +15,32 @@ use Illuminate\View\View;
 class UserController extends Controller
 {
 
-    public function showUser()
+    public function showUser(Request $request)
     {
+        // $role = $request->query('role');
+
+        // $results = User::select('users.userId', 'users.name', 'users.email', 'users.phoneNo', 'users.dob', 'users.gender', 'users.profileImg', 'users.role', 'users.permanentAddress', 'users.temporaryAddress', 'users.emergencyContactNo', 'users.startDate', 'student_batches.batchId', 'batches.name AS batchname')
+        //     ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
+        //     ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
+        //     ->when($role, function ($query, $role) {
+        //         return $query->where('users.role', $role);
+        //     })
+        //     ->paginate(5);
+
+        $role = $request->query('role');
+
+        // Convert comma-separated string to an array if necessary
+        $roles = is_string($role) ? explode(',', $role) : [$role];
+
         $results = User::select('users.userId', 'users.name', 'users.email', 'users.phoneNo', 'users.dob', 'users.gender', 'users.profileImg', 'users.role', 'users.permanentAddress', 'users.temporaryAddress', 'users.emergencyContactNo', 'users.startDate', 'student_batches.batchId', 'batches.name AS batchname')
             ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
             ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
+            ->when($roles, function ($query, $roles) {
+                return $query->whereIn('users.role', $roles);
+            })
             ->paginate(5);
+
+
 
         // $results = User::select('users.userId', 'users.name', 'users.email', 'users.phoneNo', 'users.dob', 'users.gender', 'users.profileImg', 'users.role', 'users.permanentAddress', 'users.temporaryAddress', 'users.emergencyContactNo', 'users.startDate', 'student_batches.batchId', 'batches.name AS batchname')
         // ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
@@ -34,6 +54,15 @@ class UserController extends Controller
 
     public function insertUser(Request $request)
     {
+        $request->validate([
+
+            'profileimg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $file = $request->file('profileimg');
+        $imageName = time() . '.' . $file->extension();
+        $file->move(public_path('profileImage'), $imageName);
+
         $insertUser = new User;
         $insertUser->name = $request->name;
         $insertUser->email = $request->email;
@@ -45,7 +74,7 @@ class UserController extends Controller
         $insertUser->permanentAddress = $request->paddress;
         $insertUser->temporaryAddress = $request->taddress;
         $insertUser->startDate = $request->startdate;
-        // $insertUser->profileimg = $request->role;
+        $insertUser->profileimg = 'profileImage/' . $imageName;
         $insertUser->emergencyContactNo = $request->econtact;
         $insertUser->save();
 
@@ -55,10 +84,10 @@ class UserController extends Controller
             $studentBatch->userId = $insertUser->userId;
             $studentBatch->save();
 
-            $courseAssigned = new CourseAssigned;
-            $courseAssigned->userId = $insertUser->userId;
-            $courseAssigned->courseId = $request->courseId;
-            $courseAssigned->save();
+            // $courseAssigned = new CourseAssigned;
+            // $courseAssigned->userId = $insertUser->userId;
+            // $courseAssigned->courseId = $request->courseId;
+            // $courseAssigned->save();
         }
         return response()->json('User Inserted Sucessfully');
     }
