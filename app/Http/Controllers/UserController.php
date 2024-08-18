@@ -1,0 +1,106 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Course;
+use App\Models\CourseAssigned;
+use App\Models\StudentBatch;
+use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\View\View;
+
+
+class UserController extends Controller
+{
+
+    public function showUser()
+    {
+        $results = User::select('users.userId', 'users.name', 'users.email', 'users.phoneNo', 'users.dob', 'users.gender', 'users.profileImg', 'users.role', 'users.permanentAddress', 'users.temporaryAddress', 'users.emergencyContactNo', 'users.startDate', 'student_batches.batchId', 'batches.name AS batchname')
+            ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
+            ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
+            ->paginate(5);
+
+        // $results = User::select('users.userId', 'users.name', 'users.email', 'users.phoneNo', 'users.dob', 'users.gender', 'users.profileImg', 'users.role', 'users.permanentAddress', 'users.temporaryAddress', 'users.emergencyContactNo', 'users.startDate', 'student_batches.batchId', 'batches.name AS batchname')
+        // ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
+        // ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
+        // ->leftJoin('course_assigned', 'users.userId', '=', 'course_assigned.userId')
+        // ->leftJoin('courses', 'course_assigned.courseId', '=', 'courses.courseId')
+        // ->paginate(5);
+
+        return response()->json($results);
+    }
+
+    public function insertUser(Request $request)
+    {
+        $insertUser = new User;
+        $insertUser->name = $request->name;
+        $insertUser->email = $request->email;
+        $insertUser->password = Hash::make($request->password);
+        $insertUser->role = $request->role;
+        $insertUser->phoneNo = $request->phone;
+        $insertUser->dob = $request->date;
+        $insertUser->gender = $request->gender;
+        $insertUser->permanentAddress = $request->paddress;
+        $insertUser->temporaryAddress = $request->taddress;
+        $insertUser->startDate = $request->startdate;
+        // $insertUser->profileimg = $request->role;
+        $insertUser->emergencyContactNo = $request->econtact;
+        $insertUser->save();
+
+        if ($request->role == 'student') {
+            $studentBatch = new StudentBatch;
+            $studentBatch->batchId = $request->batchId;
+            $studentBatch->userId = $insertUser->userId;
+            $studentBatch->save();
+
+            $courseAssigned = new CourseAssigned;
+            $courseAssigned->userId = $insertUser->userId;
+            $courseAssigned->courseId = $request->courseId;
+            $courseAssigned->save();
+        }
+        return response()->json('User Inserted Sucessfully');
+    }
+
+
+    public function deleteUser($userId)
+    {
+        $data = User::find($userId);
+        $data->delete();
+        return response()->json('User Deleted Sucessfully');
+    }
+
+    // public function update($userId)
+    // {
+    //     // $data = User::find($userId);
+    //     // return view('user.updateUser', compact('data'));
+    //     return response()->json(User::find($userId));
+    // }
+
+    public function updateUser(Request $request, $userId)
+    {
+        $data = User::find($userId);
+        $data->name = $request->name;
+        $data->email = $request->email;
+        // $data->password = $request->password;
+        $data->role = $request->role;
+        $data->phoneNo = $request->phone;
+        $data->dob = $request->date;
+        $data->gender = $request->gender;
+        $data->permanentAddress = $request->paddress;
+        $data->temporaryAddress = $request->taddress;
+        $data->startDate = $request->startdate;
+        // $data->profileimg = $request->role;
+        $data->emergencyContactNo = $request->econtact;
+        $data->update();
+        return response()->json('User Updated Sucessfully');
+    }
+}
+
+
+/*
+{
+	data: [],
+	pagination: { totalData: 10 }
+}*/
