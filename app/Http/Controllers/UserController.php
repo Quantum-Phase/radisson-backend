@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\CourseAssigned;
 use App\Models\StudentBatch;
+use App\Models\StudentCourse;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +33,7 @@ class UserController extends Controller
         // Convert comma-separated string to an array if necessary
         $roles = is_string($role) ? explode(',', $role) : [$role];
 
-        $results = User::select('users.userId', 'users.name', 'users.email', 'users.phoneNo', 'users.dob', 'users.gender', 'users.profileImg', 'users.role', 'users.permanentAddress', 'users.temporaryAddress', 'users.emergencyContactNo', 'users.startDate', 'student_batches.batchId', 'batches.name AS batchname')
+        $results = User::select('users.userId', 'users.name', 'users.email', 'users.phoneNo', 'users.dob', 'users.gender', 'users.profileImg', 'users.role', 'users.permanentAddress', 'users.temporaryAddress', 'users.emergencyContactNo', 'users.startDate', 'student_batches.batchId', 'batches.name AS batchname',)
             ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
             ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
             ->when($roles, function ($query, $roles) {
@@ -84,10 +85,10 @@ class UserController extends Controller
             $studentBatch->userId = $insertUser->userId;
             $studentBatch->save();
 
-            // $courseAssigned = new CourseAssigned;
-            // $courseAssigned->userId = $insertUser->userId;
-            // $courseAssigned->courseId = $request->courseId;
-            // $courseAssigned->save();
+            $studentCourse = new StudentCourse();
+            $studentCourse->userId = $insertUser->userId;
+            $studentCourse->courseId = $request->courseId;
+            $studentCourse->save();
         }
         return response()->json('User Inserted Sucessfully');
     }

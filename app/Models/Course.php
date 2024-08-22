@@ -27,14 +27,14 @@ class Course extends Model
     // Set to false if primary key is not an integer
     protected $keyType = 'int'; // or 'string' if using a non-integer key
 
-    public function CourseAssigned(): HasMany
+    public function StudentCourse(): HasMany
     {
-        return $this->hasMany(CourseAssigned::class, 'courseId');
+        return $this->hasMany(StudentCourse::class, 'courseId');
     }
 
     // Define the relationship to the User model through StudentBatch
     public function users(): HasManyThrough
     {
-        return $this->hasManyThrough(User::class, CourseAssigned::class, 'courseId', 'userId');
+        return $this->hasManyThrough(User::class, StudentCourse::class, 'courseId', 'userId');
     }
 }

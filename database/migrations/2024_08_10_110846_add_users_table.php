@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('courseId')->nullable();
-            $table->foreignId('mentorBatchId')->nullable();
-            $table->foreignId('studentBatchId')->nullable();
-            $table->foreignId('userFeeId')->nullable();
+            // $table->foreignId('courseId')->nullable();
+            // $table->foreignId('mentorBatchId')->nullable();
+            // $table->foreignId('studentBatchId')->nullable();
+            // $table->foreignId('userFeeId')->nullable();
 
 
             // Foreign key constraints
@@ -32,7 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-        });
+        Schema::table('users', function (Blueprint $table) {});
     }
 };
