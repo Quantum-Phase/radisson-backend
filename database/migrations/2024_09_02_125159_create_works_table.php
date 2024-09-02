@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_jobs', function (Blueprint $table) {
-            $table->id();
+        Schema::create('works', function (Blueprint $table) {
+            $table->id('workId');
+            $table->string('name')->nullable(false);
+            $table->date('start_date')->nullable();
+            $table->string('type');
+            $table->boolean('isActive')->default(true);
+            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
             $table->softDeletes();
-
-            // Foreign key constraints
-            $table->foreignId('userId');
-            $table->foreignId('workId');
         });
     }
 
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('works');
     }
 };

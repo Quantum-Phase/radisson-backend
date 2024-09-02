@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\CourseAssigned;
 use App\Models\StudentBatch;
 use App\Models\StudentCourse;
+use App\Models\StudentWork;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,22 @@ class UserController extends Controller
         // Convert comma-separated string to an array if necessary
         $roles = is_string($role) ? explode(',', $role) : [$role];
 
-        $results = User::select('users.userId', 'users.name', 'users.email', 'users.phoneNo', 'users.dob', 'users.gender', 'users.profileImg', 'users.role', 'users.permanentAddress', 'users.temporaryAddress', 'users.emergencyContactNo', 'users.startDate', 'student_batches.batchId', 'batches.name AS batchname',)
+        $results = User::select(
+            'users.userId',
+            'users.name',
+            'users.email',
+            'users.phoneNo',
+            'users.dob',
+            'users.gender',
+            'users.profileImg',
+            'users.role',
+            'users.permanentAddress',
+            'users.temporaryAddress',
+            'users.emergencyContactNo',
+            'users.startDate',
+            'student_batches.batchId',
+            'batches.name AS batchname',
+        )
             ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
             ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
             ->when($roles, function ($query, $roles) {
@@ -89,6 +105,11 @@ class UserController extends Controller
             $studentCourse->userId = $insertUser->userId;
             $studentCourse->courseId = $request->courseId;
             $studentCourse->save();
+
+            $studentWork = new StudentWork;
+            $studentWork->workId = $request->workId;
+            $studentWork->userId = $insertUser->userId;
+            $studentWork->save();
         }
         return response()->json('User Inserted Sucessfully');
     }
@@ -114,16 +135,19 @@ class UserController extends Controller
         $data->name = $request->name;
         $data->email = $request->email;
         // $data->password = $request->password;
-        $data->role = $request->role;
+        // $data->role = $request->role;
         $data->phoneNo = $request->phone;
         $data->dob = $request->date;
         $data->gender = $request->gender;
         $data->permanentAddress = $request->paddress;
         $data->temporaryAddress = $request->taddress;
-        $data->startDate = $request->startdate;
+        // $data->startDate = $request->startdate;
         // $data->profileimg = $request->role;
         $data->emergencyContactNo = $request->econtact;
         $data->update();
+
+        // $studentBatch=StudentBatch::find($userId);
+
         return response()->json('User Updated Sucessfully');
     }
 }

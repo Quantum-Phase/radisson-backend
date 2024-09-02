@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fee_managements', function (Blueprint $table) {
-            $table->id('feeId');
-            $table->string('source');
-            $table->decimal('amount', 6, 2);
+        Schema::create('student_works', function (Blueprint $table) {
+            $table->id();
             $table->timestamps();
             $table->softDeletes();
+
+            // Foreign key constraints
+            $table->foreignId('userId');
+            $table->foreignId('workId')->nullable();
         });
     }
 
@@ -25,7 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fee_management');
-        Schema::dropSoftDeletes();
+        Schema::dropIfExists('student_works');
     }
 };

@@ -11,13 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_works', function (Blueprint $table) {
-            $table->id('workId');
-            $table->string('name')->nullable(false);
-            $table->date('start_date')->nullable();
-            $table->string('type');
-            $table->boolean('isActive')->default(true);
-            $table->boolean('isDeleted')->default(false);
+        Schema::create('payments', function (Blueprint $table) {
+            $table->id('paymentId');
+            $table->string('source');
+            $table->decimal('amount', 6, 2);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -28,6 +25,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('payments');
+        Schema::dropSoftDeletes();
     }
 };

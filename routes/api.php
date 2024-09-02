@@ -3,6 +3,9 @@
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\JobController;
+use App\Models\StudentWork;
+use App\Models\Work;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -44,4 +47,10 @@ Route::group([
     Route::delete('/course/{courseId}', [CourseController::class, 'deleteCourse'])->name("deleteCourse");
     // Route::get('/course/{courseId}', [CourseController::class, 'updatec'])->name('updatec');
     Route::put('/course/{courseId}', [CourseController::class, 'updateCourse'])->name('updateCourse');
+
+    //Route Internship
+    Route::get('/job', [JobController::class, 'showJob'])->name('ShowJob');
+    Route::post('/job', [JobController::class, 'insertJob'])->name('InsertJob');
+    Route::delete('/job/{workId}', [JobController::class, 'deleteJob'])->name('DeleteJob');
+    Route::put('/job/{workId}', [JobController::class, 'updateJob'])->name('UpdateJob');
 });
