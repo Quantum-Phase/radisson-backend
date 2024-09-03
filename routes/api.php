@@ -3,6 +3,7 @@
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\FeeController;
 use App\Http\Controllers\JobController;
 use App\Models\StudentWork;
 use App\Models\Work;
@@ -53,4 +54,10 @@ Route::group([
     Route::post('/job', [JobController::class, 'insertJob'])->name('InsertJob');
     Route::delete('/job/{workId}', [JobController::class, 'deleteJob'])->name('DeleteJob');
     Route::put('/job/{workId}', [JobController::class, 'updateJob'])->name('UpdateJob');
+
+    //Route Fee
+    Route::get('/fee', [FeeController::class, 'showFee'])->name("ShowFee");
+    Route::post('/fee', [FeeController::class, 'insertFee'])->name('InsertFee');
+    Route::delete('/fee/{feeId}', [FeeController::class, 'deleteFee'])->name('DeleteFee');
+    Route::put('/fee/{feeId}', [FeeController::class, 'updateFee'])->name('UpdateFee');
 });

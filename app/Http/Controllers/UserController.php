@@ -19,15 +19,6 @@ class UserController extends Controller
 
     public function showUser(Request $request)
     {
-        // $role = $request->query('role');
-
-        // $results = User::select('users.userId', 'users.name', 'users.email', 'users.phoneNo', 'users.dob', 'users.gender', 'users.profileImg', 'users.role', 'users.permanentAddress', 'users.temporaryAddress', 'users.emergencyContactNo', 'users.startDate', 'student_batches.batchId', 'batches.name AS batchname')
-        //     ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
-        //     ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
-        //     ->when($role, function ($query, $role) {
-        //         return $query->where('users.role', $role);
-        //     })
-        //     ->paginate(5);
 
         $role = $request->query('role');
 
@@ -56,15 +47,6 @@ class UserController extends Controller
                 return $query->whereIn('users.role', $roles);
             })
             ->paginate(5);
-
-
-
-        // $results = User::select('users.userId', 'users.name', 'users.email', 'users.phoneNo', 'users.dob', 'users.gender', 'users.profileImg', 'users.role', 'users.permanentAddress', 'users.temporaryAddress', 'users.emergencyContactNo', 'users.startDate', 'student_batches.batchId', 'batches.name AS batchname')
-        // ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
-        // ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
-        // ->leftJoin('course_assigned', 'users.userId', '=', 'course_assigned.userId')
-        // ->leftJoin('courses', 'course_assigned.courseId', '=', 'courses.courseId')
-        // ->paginate(5);
 
         return response()->json($results);
     }
@@ -106,10 +88,10 @@ class UserController extends Controller
             $studentCourse->courseId = $request->courseId;
             $studentCourse->save();
 
-            $studentWork = new StudentWork;
-            $studentWork->workId = $request->workId;
-            $studentWork->userId = $insertUser->userId;
-            $studentWork->save();
+            // $studentWork = new StudentWork;
+            // $studentWork->workId = $request->workId;
+            // $studentWork->userId = $insertUser->userId;
+            // $studentWork->save();
         }
         return response()->json('User Inserted Sucessfully');
     }
