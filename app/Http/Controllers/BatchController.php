@@ -24,16 +24,22 @@ class BatchController extends Controller
         return response()->json('Batch inserted sucessfully');
     }
 
-    public function deleteBatch($id)
+    public function deleteBatch($batchId)
     {
-        $batch = Batch::find($id);
+        $batch = Batch::find($batchId);
         $batch->delete();
         return response()->json('Batch Deleted Sucessfully');
     }
 
-    public function UpdateBatch(Request $request, $id)
+    public function updateb($batchId)
     {
-        $batch = Batch::find($id);
+        $batch = Batch::find($batchId);
+        return response()->json($batch);
+    }
+
+    public function updateBatch(Request $request, $batchId)
+    {
+        $batch = Batch::find($batchId);
         $batch->name = $request->name;
         $batch->update();
         return response()->json('Batch Updated Sucessfully');

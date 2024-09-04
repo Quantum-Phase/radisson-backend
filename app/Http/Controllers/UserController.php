@@ -62,12 +62,15 @@ class UserController extends Controller
         $imageName = time() . '.' . $file->extension();
         $file->move(public_path('profileImage'), $imageName);
 
+        // $username = $request->name;
+
         $insertUser = new User;
         $insertUser->name = $request->name;
         $insertUser->email = $request->email;
         $insertUser->password = Hash::make($request->password);
+        // $insertUser->password = Hash::make($this->generatedpassword($username));
         $insertUser->role = $request->role;
-        $insertUser->phoneNo = $request->phone;
+        $insertUser->phoneNo = $request->phoneNo;
         $insertUser->dob = $request->date;
         $insertUser->gender = $request->gender;
         $insertUser->permanentAddress = $request->paddress;
@@ -104,34 +107,50 @@ class UserController extends Controller
         return response()->json('User Deleted Sucessfully');
     }
 
-    // public function update($userId)
-    // {
-    //     // $data = User::find($userId);
-    //     // return view('user.updateUser', compact('data'));
-    //     return response()->json(User::find($userId));
-    // }
+    public function update($userId)
+    {
+        $data = User::find($userId);
+        // return view('user.updateUser', compact('data'));
+        return response()->json($data);
+    }
 
     public function updateUser(Request $request, $userId)
     {
         $data = User::find($userId);
         $data->name = $request->name;
         $data->email = $request->email;
-        // $data->password = $request->password;
-        // $data->role = $request->role;
-        $data->phoneNo = $request->phone;
+        $data->phoneNo = $request->phoneNo;
         $data->dob = $request->date;
         $data->gender = $request->gender;
         $data->permanentAddress = $request->paddress;
         $data->temporaryAddress = $request->taddress;
-        // $data->startDate = $request->startdate;
-        // $data->profileimg = $request->role;
         $data->emergencyContactNo = $request->econtact;
+
+        if ($request->hasFile('profileimg')) {
+            $request->validate([
+                'profileimg' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+
+            if ($data->profileimg && file_exists(public_path($data->profileimg))) {
+                unlink(public_path($data->profileimg));
+            }
+
+
+            $file = $request->file('profileimg');
+            $imageName = time() . '.' . $file->extension();
+            $file->move(public_path('profileImage'), $imageName);
+
+            $data->profileimg = 'profileImage/' . $imageName;
+        }
+
         $data->update();
 
         // $studentBatch=StudentBatch::find($userId);
 
         return response()->json('User Updated Sucessfully');
     }
+
+    // public function generatepassword($username) {}
 }
 
 

@@ -20,6 +20,7 @@ class UserSeeder extends Seeder
             'email' => 'radisson@gmail.com',
             'password' => Hash::make('Aadmin@123'),
             'role' => 'superadmin',
+            'phoneNo' => '9876543210'
         ]);
     }
 }

@@ -31,6 +31,12 @@ class JobController extends Controller
         return response()->json('Internship/Job Deleted Sucessfully');
     }
 
+    public function update($workId)
+    {
+        $jobs = Work::find($workId);
+        return response()->json($jobs);
+    }
+
     public function updateJob(Request $request, $workId)
     {
         $jobs = Work::find($workId);
