@@ -12,7 +12,12 @@ class BatchController extends Controller
 {
     public function showBatch()
     {
-        $batch_data = Batch::all()->paginate(5);
+        $batch_data = Batch::select(
+            'batches.batchId',
+            'batches.name',
+            'batches.isActive',
+            'batches.isDeleted',
+        )->paginate(5);
         return response()->json($batch_data);
     }
 
