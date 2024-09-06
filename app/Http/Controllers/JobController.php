@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\StudentWork;
 use App\Models\Work;
 
 
@@ -58,6 +59,10 @@ class JobController extends Controller
         $insertJob->type = $request->type;
         $insertJob->save();
 
+        //Insert Student in Job
+        $StudentJob = new StudentWork;
+        $StudentJob->userId = $request->input('studentId');
+        $StudentJob->workId = $insertJob->workId;
         return response()->json('Internship/Job Inserted Sucessfully');
     }
 
