@@ -27,17 +27,8 @@ class JobController extends Controller
     public function showJob(Request $request)
     {
         $limit = (int)$request->limit;
-        if ($request->has($limit)) {
-            $job = Work::select(
-                'workId',
-                'name',
-                'start_date',
-                'type',
-                'isActive',
-                'isDeleted',
-            );
-            return response()->json($job);
-        }
+        $search = $request->search;
+
         $job = Work::select(
             'workId',
             'name',
@@ -45,9 +36,20 @@ class JobController extends Controller
             'type',
             'isActive',
             'isDeleted',
-        )->paginate(10);
+        )
+            ->when($search, function ($query, $search) {
+                return $query->where('name', 'like', "%$search%");
+            });
+
+        if ($limit > 0) {
+            $job = $job->paginate($limit);
+        } else {
+            $job = $job->get();
+        }
+
         return response()->json($job);
     }
+
     public function insertJob(Request $request)
     {
         $insertJob = new Work();
@@ -55,6 +57,7 @@ class JobController extends Controller
         $insertJob->start_date = $request->start_date;
         $insertJob->type = $request->type;
         $insertJob->save();
+
         return response()->json('Internship/Job Inserted Sucessfully');
     }
 

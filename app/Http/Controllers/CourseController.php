@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\MentorCourse;
+use App\Models\User;
 use Illuminate\Http\Request;
+
 
 class CourseController extends Controller
 {
@@ -60,6 +63,12 @@ class CourseController extends Controller
         $course->duration_unit = $request->dunit;
         $course->duration = $request->duration;
         $course->save();
+
+        //Insert Mentor in Course
+        $mentorCourse = new MentorCourse;
+        $mentorCourse->userId = $request->input('mentorId');
+        $mentorCourse->courseId = $course->courseId;
+
         return response()->json('Course Inserted Sucessfully');
     }
 
