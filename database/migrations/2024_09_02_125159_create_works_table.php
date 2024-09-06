@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('works', function (Blueprint $table) {
             $table->id('workId');
             $table->string('name')->nullable(false);
-            $table->timestamp('start_date')->nullable();
+            // $table->timestamp('start_date')->nullable();
+            $table->date('start_date')->nullable()->format('Y-m-d');
             $table->string('type');
             $table->boolean('isActive')->default(true);
             $table->boolean('isDeleted')->default(false);
