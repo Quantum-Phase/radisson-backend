@@ -45,6 +45,7 @@ class UserController extends Controller
             'users.userId',
             'users.name',
             'users.email',
+            'users.student_code',
             'users.phoneNo',
             'users.dob',
             'users.gender',
@@ -66,7 +67,8 @@ class UserController extends Controller
             ->when($search, function ($query, $search) {
                 return $query->where(function ($subquery) use ($search) {
                     $subquery->where('users.name', 'like', "%$search%")
-                        ->orWhere('users.email', 'like', "%$search%");
+                        ->orWhere('users.email', 'like', "%$search%")
+                        ->orWhere('users.phoneNo', 'like', "%$search%");
                 });
             });
 
@@ -91,6 +93,14 @@ class UserController extends Controller
 
         // $username = $request->name;
 
+        $dateString = $request->start_date;
+        $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
+        $formattedDate = $date->format('Y-m-d H:i:s');
+
+        $dateString1 = $request->date;
+        $date1 = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString1);
+        $formattedDate1 = $date1->format('Y-m-d H:i:s');
+
         $insertUser = new User;
         $insertUser->name = $request->name;
         $insertUser->email = $request->email;
@@ -98,16 +108,24 @@ class UserController extends Controller
         // $insertUser->password = Hash::make($this->generatedpassword($username));
         $insertUser->role = $request->role;
         $insertUser->phoneNo = $request->phoneNo;
-        $insertUser->dob = $request->date;
+        $insertUser->dob = $formattedDate1;
         $insertUser->gender = $request->gender;
         $insertUser->permanentAddress = $request->paddress;
         $insertUser->temporaryAddress = $request->taddress;
-        $insertUser->startDate = $request->startdate;
+        $insertUser->startDate = $formattedDate;
         $insertUser->profileimg = 'profileImage/' . $imageName;
         $insertUser->emergencyContactNo = $request->econtact;
         $insertUser->save();
 
         if ($request->role == 'student') {
+
+            $studentCode = 'STD-' . $insertUser->userId;
+
+            // Update the student_code for the user
+            $insertUser->student_code = $studentCode;
+            $insertUser->time = $request->time;
+            $insertUser->save();
+
             $studentBatch = new StudentBatch;
             $studentBatch->batchId = $request->batchId;
             $studentBatch->userId = $insertUser->userId;

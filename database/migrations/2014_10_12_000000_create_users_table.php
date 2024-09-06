@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id('userId');
             $table->string('name');
+            $table->string('student_code')->unique();
             $table->string('email')->unique();
             $table->string('password');
             $table->string('phoneNo')->unique();
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->string('temporaryAddress')->nullable();
             $table->string('emergencyContactNo')->nullable();
             $table->date('startDate')->nullable();
+            $table->time('time')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

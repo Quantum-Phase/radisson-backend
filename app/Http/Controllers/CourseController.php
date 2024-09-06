@@ -68,7 +68,7 @@ class CourseController extends Controller
         $mentorCourse = new MentorCourse;
         $mentorCourse->userId = $request->input('mentorId');
         $mentorCourse->courseId = $course->courseId;
-
+        $mentorCourse->save();
         return response()->json('Course Inserted Sucessfully');
     }
 
