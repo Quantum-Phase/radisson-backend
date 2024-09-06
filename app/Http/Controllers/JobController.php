@@ -53,9 +53,13 @@ class JobController extends Controller
 
     public function insertJob(Request $request)
     {
+        $dateString = $request->start_date;
+        $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
+        $formattedDate = $date->format('Y-m-d H:i:s');
+
         $insertJob = new Work();
         $insertJob->name = $request->name;
-        $insertJob->start_date = $request->start_date;
+        $insertJob->start_date = $formattedDate;
         $insertJob->type = $request->type;
         $insertJob->save();
 
@@ -73,7 +77,7 @@ class JobController extends Controller
         return response()->json('Internship/Job Deleted Sucessfully');
     }
 
-    public function update($workId)
+    public function updatej($workId)
     {
         $studentWork = StudentWork::with(['student.user', 'work'])
             ->findOrFail($workId);
