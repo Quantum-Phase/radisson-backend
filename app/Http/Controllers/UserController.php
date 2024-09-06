@@ -72,10 +72,7 @@ class UserController extends Controller
 
         if ($request->has('limit')) {
             $results = $results->paginate($limit);
-        } else {
-            $results = $results->paginate(10);
         }
-
         return response()->json($results);
     }
 
