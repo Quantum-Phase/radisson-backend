@@ -9,6 +9,20 @@ use Illuminate\Http\Request;
 
 class FeeController extends Controller
 {
+    public function searchFee(Request $request)
+    {
+        $search = $request->input('query');
+
+        if (!$search) {
+            return response()->json([
+                'message' => "Query parameter is required"
+            ], 400);
+        } else {
+            $searchfee = Payment::where('name', 'LIKE', '%' . $search . '%')
+                ->get();
+            return response()->json($searchfee);
+        }
+    }
     public function showFee()
     {
         $fee_data = Payment::all();

@@ -10,14 +10,40 @@ use Illuminate\Http\Request;
 
 class BatchController extends Controller
 {
-    public function showBatch()
+    public function searchBatch(Request $request)
     {
+        $search = $request->input('query');
+
+        if (!$search) {
+            return response()->json([
+                'message' => "Query parameter is required"
+            ], 400);
+        } else {
+            $searchbatch = Batch::where('name', 'LIKE', '%' . $search . '%')
+                ->orwhere('phoneNo', 'LIKE', '%' . $search . '%')
+                ->get();
+            return response()->json($searchbatch);
+        }
+    }
+
+    public function showBatch(Request $request)
+    {
+        $limit = (int)$request->limit;
+        if ($request->has($limit)) {
+            $batch_data = Batch::select(
+                'batches.batchId',
+                'batches.name',
+                'batches.isActive',
+                'batches.isDeleted',
+            );
+            return response()->json($batch_data);
+        }
         $batch_data = Batch::select(
             'batches.batchId',
             'batches.name',
             'batches.isActive',
             'batches.isDeleted',
-        )->paginate(5);
+        )->paginate(10);
         return response()->json($batch_data);
     }
 

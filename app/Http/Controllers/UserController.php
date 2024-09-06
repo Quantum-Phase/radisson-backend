@@ -17,38 +17,86 @@ use Illuminate\View\View;
 class UserController extends Controller
 {
 
+    public function searchUser(Request $request)
+    {
+        $search = $request->input('query');
+
+        if (!$search) {
+            return response()->json([
+                'message' => "Query parameter is required"
+            ], 400);
+        } else {
+            $searchuser = User::where('name', 'LIKE', '%' . $search . '%')
+                ->orwhere('phoneNo', 'LIKE', '%' . $search . '%')
+                ->get();
+            return response()->json($searchuser);
+        }
+    }
+
     public function showUser(Request $request)
     {
+        $limit = (int)$request->limit;
+        // $perpage = $request->input('per_page', 10);
+        if ($request->has($limit)) {
+            $role = $request->query('role');
 
-        $role = $request->query('role');
+            // Convert comma-separated string to an array if necessary
+            $roles = is_string($role) ? explode(',', $role) : [$role];
 
-        // Convert comma-separated string to an array if necessary
-        $roles = is_string($role) ? explode(',', $role) : [$role];
+            $results = User::select(
+                'users.userId',
+                'users.name',
+                'users.email',
+                'users.phoneNo',
+                'users.dob',
+                'users.gender',
+                'users.profileImg',
+                'users.role',
+                'users.permanentAddress',
+                'users.temporaryAddress',
+                'users.emergencyContactNo',
+                'users.startDate',
+                'student_batches.batchId',
+                'batches.name AS batchname',
+            )
+                ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
+                ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
+                ->when($roles, function ($query, $roles) {
+                    return $query->whereIn('users.role', $roles);
+                });
+            return response()->json($results);
+        } else {
 
-        $results = User::select(
-            'users.userId',
-            'users.name',
-            'users.email',
-            'users.phoneNo',
-            'users.dob',
-            'users.gender',
-            'users.profileImg',
-            'users.role',
-            'users.permanentAddress',
-            'users.temporaryAddress',
-            'users.emergencyContactNo',
-            'users.startDate',
-            'student_batches.batchId',
-            'batches.name AS batchname',
-        )
-            ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
-            ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
-            ->when($roles, function ($query, $roles) {
-                return $query->whereIn('users.role', $roles);
-            })
-            ->paginate(5);
+            $role = $request->query('role');
 
-        return response()->json($results);
+            // Convert comma-separated string to an array if necessary
+            $roles = is_string($role) ? explode(',', $role) : [$role];
+
+            $results = User::select(
+                'users.userId',
+                'users.name',
+                'users.email',
+                'users.phoneNo',
+                'users.dob',
+                'users.gender',
+                'users.profileImg',
+                'users.role',
+                'users.permanentAddress',
+                'users.temporaryAddress',
+                'users.emergencyContactNo',
+                'users.startDate',
+                'student_batches.batchId',
+                'batches.name AS batchname',
+            )
+                ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
+                ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
+                ->when($roles, function ($query, $roles) {
+                    return $query->whereIn('users.role', $roles);
+                })
+                ->paginate(10);
+
+            return response()->json($results);
+        }
     }
 
     public function insertUser(Request $request)

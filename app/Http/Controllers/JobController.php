@@ -9,9 +9,43 @@ use Illuminate\Http\Request;
 
 class JobController extends Controller
 {
+    public function searchJob(Request $request)
+    {
+        $search = $request->input('query');
+
+        if (!$search) {
+            return response()->json([
+                'message' => "Query parameter is required"
+            ], 400);
+        } else {
+            $searchjob = Work::where('name', 'LIKE', '%' . $search . '%')
+                ->get();
+            return response()->json($searchjob);
+        }
+    }
+
     public function showJob(Request $request)
     {
-        $job = Work::all()->paginate(5);
+        $limit = (int)$request->limit;
+        if ($request->has($limit)) {
+            $job = Work::select(
+                'workId',
+                'name',
+                'start_date',
+                'type',
+                'isActive',
+                'isDeleted',
+            );
+            return response()->json($job);
+        }
+        $job = Work::select(
+            'workId',
+            'name',
+            'start_date',
+            'type',
+            'isActive',
+            'isDeleted',
+        )->paginate(10);
         return response()->json($job);
     }
     public function insertJob(Request $request)

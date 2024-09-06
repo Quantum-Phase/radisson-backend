@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('courses', function (Blueprint $table) {
             $table->id('courseId');
-            $table->string('name')->nullable(false);
+            $table->string('name')->nullable(false)->unique();
             $table->boolean('isActive')->default(true);
             $table->boolean('isDeleted')->default(false);
             $table->decimal('totalFee', 8, 2);

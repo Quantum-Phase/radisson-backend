@@ -7,21 +7,49 @@ use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
-
-    public function showCourse()
+    public function searchCourse(Request $request)
     {
-        $course = Course::select(
-            'courses.courseId',
-            'courses.name',
-            'courses.isActive',
-            'courses.isDeleted',
-            'courses.totalFee',
-            'courses.duration_unit',
-            'courses.duration'
-        )
-            ->paginate(5);
-        // return view('course.displaycourse', compact('course'));
-        return response()->json($course);
+        $search = $request->input('query');
+
+        if (!$search) {
+            return response()->json([
+                'message' => "Query parameter is required"
+            ], 400);
+        } else {
+            $searchcourse = Course::where('name', 'LIKE', '%' . $search . '%')
+                ->get();
+            return response()->json($searchcourse);
+        }
+    }
+
+    public function showCourse(Request $request)
+    {
+        $limit = (int)$request->limit;
+        if ($request->has($limit)) {
+            $course = Course::select(
+                'courses.courseId',
+                'courses.name',
+                'courses.isActive',
+                'courses.isDeleted',
+                'courses.totalFee',
+                'courses.duration_unit',
+                'courses.duration'
+            );
+            return response()->json($course);
+        } else {
+            $course = Course::select(
+                'courses.courseId',
+                'courses.name',
+                'courses.isActive',
+                'courses.isDeleted',
+                'courses.totalFee',
+                'courses.duration_unit',
+                'courses.duration'
+            )
+                ->paginate(10);
+            // return view('course.displaycourse', compact('course'));
+            return response()->json($course);
+        }
     }
 
     public function insertCourse(Request $request)

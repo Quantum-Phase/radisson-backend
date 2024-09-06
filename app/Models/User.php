@@ -13,8 +13,6 @@ use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
-
-
 class User extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -87,5 +85,15 @@ class User extends Authenticatable implements JWTSubject
     public function batches(): HasManyThrough
     {
         return $this->hasManyThrough(Batch::class, StudentBatch::class, 'userId', 'batchId');
+    }
+    public function course()
+    {
+        return $this->belongsTo(Course::class, 'courseId');
+    }
+
+    // A user has one user fee
+    public function userFee()
+    {
+        return $this->hasOne(UserPayment::class, 'userId');
     }
 }
