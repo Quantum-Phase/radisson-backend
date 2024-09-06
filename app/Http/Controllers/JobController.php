@@ -36,8 +36,9 @@ class JobController extends Controller
             'start_date',
             'type',
             'isActive',
-            'isDeleted',
+            'isDeleted'
         )
+            ->with(['studentWork.user'])
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'like', "%$search%");
             });
@@ -48,9 +49,20 @@ class JobController extends Controller
             $job = $job->get();
         }
 
+        $job->transform(function ($work) {
+            $work->student = $work->studentWork->map(function ($studentWork) {
+                return [
+                    'id' => $studentWork->user->userId,
+                    'name' => $studentWork->user->name,
+                    // Add other student fields as needed
+                ];
+            })->first(); // Get the first student object
+            unset($work->studentWork);
+            return $work;
+        });
+
         return response()->json($job);
     }
-
     public function insertJob(Request $request)
     {
         $dateString = $request->start_date;
@@ -67,6 +79,7 @@ class JobController extends Controller
         $StudentJob = new StudentWork;
         $StudentJob->userId = $request->input('studentId');
         $StudentJob->workId = $insertJob->workId;
+        $StudentJob->save();
         return response()->json('Internship/Job Inserted Sucessfully');
     }
 
