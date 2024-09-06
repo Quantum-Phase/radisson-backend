@@ -75,8 +75,16 @@ class JobController extends Controller
 
     public function update($workId)
     {
-        $jobs = Work::find($workId);
-        return response()->json($jobs);
+        $studentWork = StudentWork::with(['student.user', 'work'])
+            ->findOrFail($workId);
+
+        // Now you have access to student's name and other details:
+        $studentName = $studentWork->student->user->name;
+        $student = $studentWork->student;
+        $work = $studentWork->work;
+
+        // ... do something with the student's name, student, and work data
+        return response()->json(['studentName' => $studentName, 'student' => $student, 'work' => $work]);
     }
 
     public function updateJob(Request $request, $workId)
