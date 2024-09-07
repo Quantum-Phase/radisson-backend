@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name')->nullable(false)->unique();
             $table->boolean('isActive')->default(true);
             $table->boolean('isDeleted')->default(false);
-            $table->decimal('totalFee', 8, 2);
+            $table->integer('totalFee');
             $table->string('duration_unit');
             $table->integer('duration');
             $table->timestamps();

@@ -95,12 +95,12 @@ class JobController extends Controller
         $studentWork = StudentWork::with(['student.user', 'work'])
             ->findOrFail($workId);
 
-        // Now you have access to student's name and other details:
+
         $studentName = $studentWork->student->user->name;
         $student = $studentWork->student;
         $work = $studentWork->work;
 
-        // ... do something with the student's name, student, and work data
+
         return response()->json(['studentName' => $studentName, 'student' => $student, 'work' => $work]);
     }
 
@@ -112,10 +112,15 @@ class JobController extends Controller
         $jobs->type = $request->type;
         $jobs->update();
 
-        $studentJobs = StudentWork::where('workId', $workId)->first();
-        if ($studentJobs) {
-            $studentJobs->userId = $request->studentId;
-            $studentJobs->update();
+        $studentJob = StudentWork::where('workId', $workId)->first();
+        if ($studentJob) {
+            $studentJob->userId = $request->studentId;
+            $studentJob->update();
+        } else {
+            $StudentJob = new StudentWork;
+            $StudentJob->userId = $request->input('studentId');
+            $StudentJob->workId = $workId;
+            $StudentJob->save();
         }
         return response()->json('Internship/Job Updated Sucessfully');
     }
