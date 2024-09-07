@@ -221,7 +221,7 @@ class UserController extends Controller
         $data->temporaryAddress = $request->taddress;
         $data->emergencyContactNo = $request->econtact;
         $data->parents_name = $request->parents_name;
-        $data->startDate = $request->startDate;
+        $data->startDate = $request->start_date;
         $data->time = $request->time;
 
         if ($request->hasFile('profileimg')) {
