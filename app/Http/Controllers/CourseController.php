@@ -55,7 +55,7 @@ class CourseController extends Controller
         // Transform the collection to structure the mentor's user data
         $course->transform(function ($course) {
             // Assuming mentorCourses has a 'user' relationship
-            $course->mentor_user = $course->mentorCourses->map(function ($mentorCourse) {
+            $course->mentor = $course->mentorCourses->map(function ($mentorCourse) {
                 return [
                     'mentorId' => $mentorCourse->user->userId,
                     'name' => $mentorCourse->user->name,
