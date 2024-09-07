@@ -94,7 +94,7 @@ class UserController extends Controller
         $imageName = time() . '.' . $file->extension();
         $file->move(public_path('profileImage'), $imageName);
 
-        // $username = $request->name;
+
 
         $dateString = $request->start_date;
         $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);

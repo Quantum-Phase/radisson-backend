@@ -77,7 +77,7 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
-    public function studentBatches(): HasMany
+    public function studentBatch(): HasMany
     {
         return $this->hasMany(StudentBatch::class, 'userId');
     }
