@@ -95,11 +95,11 @@ class CourseController extends Controller
         return response()->json('Course Deleted Sucessfully');
     }
 
-    // public function updatec($courseId)
-    // {
-    //     $course = Course::find($courseId);
-    //     return view('course.updateCourse', compact('course'));
-    // }
+    public function updatec($courseId)
+    {
+        $course = Course::find($courseId);
+        return view('course.updateCourse', compact('course'));
+    }
 
     public function updateCourse(Request $request, $courseId)
     {
@@ -109,6 +109,20 @@ class CourseController extends Controller
         $course->duration_unit = $request->dunit;
         $course->duration = $request->duration;
         $course->update();
+
+        if ($request->has('mentors')) {
+
+            foreach ($request->mentors as $mentorData) {
+                $mentorCourse = MentorCourse::where('courseId', $courseId)
+                    ->where('userId', $mentorData['userId'])
+                    ->first();
+                if ($mentorCourse) {
+                    $mentorCourse->userId = $request->userId;
+                    $mentorCourse->courseId = $request->courseId;
+                    $mentorCourse->save();
+                }
+            }
+        }
         return response()->json('Course Updated Sucessfully');
     }
 }
