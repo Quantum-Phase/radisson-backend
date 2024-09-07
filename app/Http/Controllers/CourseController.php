@@ -117,12 +117,6 @@ class CourseController extends Controller
         if ($mentorCourse) {
             $mentorCourse->userId = $request->mentorId;
             $mentorCourse->update();
-        } else {
-            $mentorCourse = new MentorCourse;
-            $mentorCourse->userId = $request->input('mentorId');
-            $mentorCourse->courseId = $courseId;
-            // $mentorCourse->courseId = $course->courseId;
-            $mentorCourse->save();
         }
         return response()->json('Course Updated Sucessfully');
     }
