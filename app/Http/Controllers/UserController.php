@@ -170,7 +170,7 @@ class UserController extends Controller
 
     public function update($userId)
     {
-        $data = User::with(['studentBatch', 'studentCourse'])->find($userId);
+        $data = User::with(['studentBatch.batch', 'studentCourse.course'])->find($userId);
 
         if (!$data) {
             return response()->json(['message' => 'User not found'], 404);
@@ -187,11 +187,23 @@ class UserController extends Controller
             'temporaryAddress' => $data->temporaryAddress,
             'emergencyContactNo' => $data->emergencyContactNo,
             'parents_name' => $data->parents_name,
-            'batchId' => optional($data->studentBatch->first())->batchId,
-            'courseId' => optional($data->studentCourse->first())->courseId
+            'batch' => $data->studentBatch->transform(function ($studentBatch) {
+                return [
+                    'batchId' => $studentBatch->batchId,
+                    'batchName' => $studentBatch->batch->name,
+                ];
+            })->first(),
+            'course' => $data->studentCourse->transform(function ($studentCourse) {
+                return [
+                    'courseId' => $studentCourse->courseId,
+                    'courseName' => $studentCourse->course->name,
+                ];
+            })->first(),
         ];
-        return response()->json($data);
+
+        return response()->json($response);
     }
+
 
     public function updateUser(Request $request, $userId)
     {
