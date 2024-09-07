@@ -222,6 +222,7 @@ class UserController extends Controller
         $data->emergencyContactNo = $request->econtact;
         $data->parents_name = $request->parents_name;
         $data->startDate = $request->startDate;
+        $data->time = $request->time;
 
         if ($request->hasFile('profileimg')) {
             $request->validate([
