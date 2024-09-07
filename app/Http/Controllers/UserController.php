@@ -245,12 +245,23 @@ class UserController extends Controller
         if ($studentCourse) {
             $studentCourse->courseId = $request->courseId;
             $studentCourse->update();
+        } else {
+            $studentCourse = new StudentCourse();
+            $studentCourse->userId = $userId;
+            $studentCourse->courseId = $request->courseId;
+            $studentCourse->save();
         }
 
         $studentsBatch = StudentBatch::where('userId', $userId)->first();
         if ($studentsBatch) {
             $studentsBatch->batchId = $request->batch_Id;
             $studentsBatch->update();
+        } else {
+
+            $studentBatch = new StudentBatch;
+            $studentBatch->batchId = $request->batchId;
+            $studentBatch->userId = $userId;
+            $studentBatch->save();
         }
 
         return response()->json('User Updated Sucessfully');
