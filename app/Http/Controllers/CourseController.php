@@ -40,7 +40,7 @@ class CourseController extends Controller
             'courses.duration_unit',
             'courses.duration'
         )
-            ->with('mentor.user') // Eager load the mentor's user data
+            ->with('mentorCourses.user') // Eager load mentorCourses and user relationships
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'like', "%$search%");
             });
@@ -54,15 +54,15 @@ class CourseController extends Controller
 
         // Transform the collection to structure the mentor's user data
         $course->transform(function ($course) {
-            // Assuming mentor has a 'user' relationship
-            $course->mentor_user = $course->mentor->map(function ($mentor) {
+            // Assuming mentorCourses has a 'user' relationship
+            $course->mentor_user = $course->mentorCourses->map(function ($mentorCourse) {
                 return [
-                    'id' => $mentor->user->userId,
-                    'name' => $mentor->user->name,
-                    // Add other mentor's user fields as needed
+                    'mentorId' => $mentorCourse->user->userId,
+                    'name' => $mentorCourse->user->name,
+                    // Add other user fields as needed
                 ];
             })->first(); // Get the first mentor's user object
-            unset($course->mentor); // Remove mentor relationship to simplify the result
+            unset($course->mentorCourses); // Remove mentorCourses relationship to simplify the result
             return $course;
         });
 
