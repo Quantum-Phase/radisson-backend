@@ -28,31 +28,45 @@ class CourseController extends Controller
     public function showCourse(Request $request)
     {
         $limit = (int)$request->limit;
-        if ($request->has($limit)) {
-            $course = Course::select(
-                'courses.courseId',
-                'courses.name',
-                'courses.isActive',
-                'courses.isDeleted',
-                'courses.totalFee',
-                'courses.duration_unit',
-                'courses.duration'
-            );
-            return response()->json($course);
+        $search = $request->search;
+
+        // Query the Course model with related mentor and user data
+        $course = Course::select(
+            'courses.courseId',
+            'courses.name',
+            'courses.isActive',
+            'courses.isDeleted',
+            'courses.totalFee',
+            'courses.duration_unit',
+            'courses.duration'
+        )
+            ->with('mentor.user') // Eager load the mentor's user data
+            ->when($search, function ($query, $search) {
+                return $query->where('name', 'like', "%$search%");
+            });
+
+        // Check if limit is provided and apply pagination or fetch all results
+        if ($limit > 0) {
+            $course = $course->paginate($limit);
         } else {
-            $course = Course::select(
-                'courses.courseId',
-                'courses.name',
-                'courses.isActive',
-                'courses.isDeleted',
-                'courses.totalFee',
-                'courses.duration_unit',
-                'courses.duration'
-            )
-                ->paginate(10);
-            // return view('course.displaycourse', compact('course'));
-            return response()->json($course);
+            $course = $course->get();
         }
+
+        // Transform the collection to structure the mentor's user data
+        $course->transform(function ($course) {
+            // Assuming mentor has a 'user' relationship
+            $course->mentor_user = $course->mentor->map(function ($mentor) {
+                return [
+                    'id' => $mentor->user->userId,
+                    'name' => $mentor->user->name,
+                    // Add other mentor's user fields as needed
+                ];
+            })->first(); // Get the first mentor's user object
+            unset($course->mentor); // Remove mentor relationship to simplify the result
+            return $course;
+        });
+
+        return response()->json($course);
     }
 
     public function insertCourse(Request $request)
@@ -69,6 +83,8 @@ class CourseController extends Controller
         $mentorCourse->userId = $request->input('mentorId');
         $mentorCourse->courseId = $course->courseId;
         $mentorCourse->save();
+
+
         return response()->json('Course Inserted Sucessfully');
     }
 
