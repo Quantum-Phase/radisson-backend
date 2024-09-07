@@ -29,21 +29,28 @@ class BatchController extends Controller
     public function showBatch(Request $request)
     {
         $limit = (int)$request->limit;
-        if ($request->has($limit)) {
-            $batch_data = Batch::select(
-                'batches.batchId',
-                'batches.name',
-                'batches.isActive',
-                'batches.isDeleted',
-            );
-            return response()->json($batch_data);
-        }
+        $search = $request->search;
+
         $batch_data = Batch::select(
             'batches.batchId',
             'batches.name',
             'batches.isActive',
             'batches.isDeleted',
-        )->paginate(10);
+        );
+
+        // Add search filtering based on search query
+        if ($search) {
+            $batch_data = $batch_data->where(function ($subquery) use ($search) {
+                $subquery->where('batches.name', 'like', "%$search%");
+            });
+        }
+
+        if ($request->has('limit')) {
+            $batch_data = $batch_data->paginate($limit);
+        } else {
+            $batch_data = $batch_data->get();
+        }
+
         return response()->json($batch_data);
     }
 
