@@ -9,9 +9,11 @@ use App\Models\StudentCourse;
 use App\Models\StudentWork;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+
 
 
 class UserController extends Controller
@@ -94,25 +96,27 @@ class UserController extends Controller
         $imageName = time() . '.' . $file->extension();
         $file->move(public_path('profileImage'), $imageName);
 
+        $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d H:i:s');
+        $formattedDob = Carbon::parse($request->date)->format('Y-m-d');
 
+        // $dateString = $request->start_date;
+        // $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
+        // if ($date !== false) {
+        //     $formattedDate = $date->format('Y-m-d H:i:s');
+        // } else {
+        //     // handle the case where the format is invalid
+        //     $formattedDate = null; // or some default value
+        // }
 
-        $dateString = $request->start_date;
-        $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
-        if ($date !== false) {
-            $formattedDate = $date->format('Y-m-d H:i:s');
-        } else {
-            // handle the case where the format is invalid
-            $formattedDate = null; // or some default value
-        }
+        // $dateString1 = $request->date;
+        // $date1 = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString1);
+        // if ($date1 !== false) {
+        //     $formattedDate1 = $date1->format('Y-m-d H:i:s');
+        // } else {
+        //     // handle the case where the format is invalid
+        //     $formattedDate1 = null; // or some default value
+        // }
 
-        $dateString1 = $request->date;
-        $date1 = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString1);
-        if ($date1 !== false) {
-            $formattedDate1 = $date1->format('Y-m-d H:i:s');
-        } else {
-            // handle the case where the format is invalid
-            $formattedDate1 = null; // or some default value
-        }
         $insertUser = new User;
         $insertUser->name = $request->name;
         $insertUser->email = $request->email;
@@ -120,11 +124,11 @@ class UserController extends Controller
         // $insertUser->password = Hash::make($this->generatedpassword($username));
         $insertUser->role = $request->role;
         $insertUser->phoneNo = $request->phoneNo;
-        $insertUser->dob = $formattedDate1;
+        $insertUser->dob = $formattedDob;
         $insertUser->gender = $request->gender;
         $insertUser->permanentAddress = $request->paddress;
         $insertUser->temporaryAddress = $request->taddress;
-        $insertUser->startDate = $formattedDate;
+        $insertUser->startDate = $formattedStartDate;
         $insertUser->profileimg = 'profileImage/' . $imageName;
         $insertUser->emergencyContactNo = $request->econtact;
         $insertUser->parents_name = $request->parents_name;

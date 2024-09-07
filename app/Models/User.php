@@ -82,6 +82,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(StudentBatch::class, 'userId');
     }
 
+    // public function studentBatches(): HasMany
+    // {
+    //     return $this->hasMany(StudentBatch::class, 'userId');
+    // }
+
     public function batches(): HasManyThrough
     {
         return $this->hasManyThrough(Batch::class, StudentBatch::class, 'userId', 'batchId');
