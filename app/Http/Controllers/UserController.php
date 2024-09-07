@@ -189,7 +189,7 @@ class UserController extends Controller
             'temporaryAddress' => $data->temporaryAddress,
             'emergencyContactNo' => $data->emergencyContactNo,
             'parents_name' => $data->parents_name,
-            'start_date' => $data->startDate,
+            'startDate' => $data->startDate,
             'time' => $data->time,
             'batch' => $data->studentBatch->transform(function ($studentBatch) {
                 return [
