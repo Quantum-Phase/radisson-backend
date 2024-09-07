@@ -183,11 +183,13 @@ class UserController extends Controller
             'phoneNo' => $data->phoneNo,
             'dob' => $data->dob,
             'gender' => $data->gender,
+            'role' => $data->role,
+            'profileImg' => $data->profileImg,
             'permanentAddress' => $data->permanentAddress,
             'temporaryAddress' => $data->temporaryAddress,
             'emergencyContactNo' => $data->emergencyContactNo,
             'parents_name' => $data->parents_name,
-            'start_date' => $data->start_date,
+            'start_date' => $data->startDate,
             'time' => $data->time,
             'batch' => $data->studentBatch->transform(function ($studentBatch) {
                 return [
