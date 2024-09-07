@@ -126,6 +126,7 @@ class UserController extends Controller
         $insertUser->profileimg = 'profileImage/' . $imageName;
         $insertUser->emergencyContactNo = $request->econtact;
         $insertUser->parents_name = $request->parents_name;
+        // $insertUser->time = $request->;
         $insertUser->save();
 
         if ($request->role == 'student') {
@@ -165,8 +166,7 @@ class UserController extends Controller
 
     public function update($userId)
     {
-        $data = User::find($userId);
-        // return view('user.updateUser', compact('data'));
+        $data = User::with(['studentBatch', 'studentCourse'])->find($userId);
         return response()->json($data);
     }
 
