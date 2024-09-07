@@ -254,7 +254,7 @@ class UserController extends Controller
 
         $studentsBatch = StudentBatch::where('userId', $userId)->first();
         if ($studentsBatch) {
-            $studentsBatch->batchId = $request->batch_Id;
+            $studentsBatch->batchId = $request->batchId;
             $studentsBatch->update();
         } else {
 
