@@ -52,7 +52,7 @@ class JobController extends Controller
         $job->transform(function ($work) {
             $work->student = $work->studentWork->map(function ($studentWork) {
                 return [
-                    'id' => $studentWork->user->userId,
+                    'userId' => $studentWork->user->userId,
                     'name' => $studentWork->user->name,
                     // Add other student fields as needed
                 ];
