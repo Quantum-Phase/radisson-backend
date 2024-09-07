@@ -176,7 +176,7 @@ class UserController extends Controller
             return response()->json(['message' => 'User not found'], 404);
         }
 
-        $response = [
+        $response = (object)[
             'userId' => $data->userId,
             'name' => $data->name,
             'email' => $data->email,
