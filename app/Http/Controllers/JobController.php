@@ -111,6 +111,12 @@ class JobController extends Controller
         $jobs->start_date = $request->start_date;
         $jobs->type = $request->type;
         $jobs->update();
+
+        $studentJobs = StudentWork::where('workId', $workId)->first();
+        if ($studentJobs) {
+            $studentJobs->userId = $request->studentId;
+            $studentJobs->update();
+        }
         return response()->json('Internship/Job Updated Sucessfully');
     }
 }

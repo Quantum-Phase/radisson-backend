@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('emergencyContactNo')->nullable();
             $table->date('startDate')->nullable();
             $table->time('time')->nullable();
+            $table->string('parents_name')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

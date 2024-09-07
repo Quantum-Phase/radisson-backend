@@ -110,7 +110,7 @@ class CourseController extends Controller
         $course->duration = $request->duration;
         $course->update();
 
-        $mentorId = $request->mentorId;
+        // $mentorId = $request->mentorId;
 
         $mentorCourse = MentorCourse::where('courseId', $courseId)->first();
 

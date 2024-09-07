@@ -55,6 +55,7 @@ class UserController extends Controller
             'users.temporaryAddress',
             'users.emergencyContactNo',
             'users.startDate',
+            'users.parents_name',
             'student_batches.batchId',
             'batches.name AS batchname',
         )
@@ -124,6 +125,7 @@ class UserController extends Controller
         $insertUser->startDate = $formattedDate;
         $insertUser->profileimg = 'profileImage/' . $imageName;
         $insertUser->emergencyContactNo = $request->econtact;
+        $insertUser->parents_name = $request->parents_name;
         $insertUser->save();
 
         if ($request->role == 'student') {
@@ -179,6 +181,7 @@ class UserController extends Controller
         $data->permanentAddress = $request->paddress;
         $data->temporaryAddress = $request->taddress;
         $data->emergencyContactNo = $request->econtact;
+        $data->parents_name = $request->parents_name;
 
         if ($request->hasFile('profileimg')) {
             $request->validate([
@@ -199,12 +202,20 @@ class UserController extends Controller
 
         $data->update();
 
-        // $studentBatch=StudentBatch::find($userId);
+        $studentCourse = StudentCourse::where('userId', $userId)->first();
+        if ($studentCourse) {
+            $studentCourse->courseId = $request->courseId;
+            $studentCourse->update();
+        }
+
+        $studentsBatch = StudentBatch::where('userId', $userId)->first();
+        if ($studentsBatch) {
+            $studentsBatch->batchId = $request->batch_Id;
+            $studentsBatch->update();
+        }
 
         return response()->json('User Updated Sucessfully');
     }
-
-    // public function generatepassword($username) {}
 }
 
 
