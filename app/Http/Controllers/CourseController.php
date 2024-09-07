@@ -57,7 +57,7 @@ class CourseController extends Controller
             // Assuming mentorCourses has a 'user' relationship
             $course->mentor = $course->mentorCourses->map(function ($mentorCourse) {
                 return [
-                    'mentorId' => $mentorCourse->user->userId,
+                    'userId' => $mentorCourse->user->userId,
                     'name' => $mentorCourse->user->name,
                     // Add other user fields as needed
                 ];
