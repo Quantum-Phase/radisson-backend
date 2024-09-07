@@ -110,18 +110,13 @@ class CourseController extends Controller
         $course->duration = $request->duration;
         $course->update();
 
-        if ($request->has('mentors')) {
+        $mentorId = $request->mentorId;
 
-            foreach ($request->mentors as $mentorData) {
-                $mentorCourse = MentorCourse::where('courseId', $courseId)
-                    ->where('userId', $mentorData['userId'])
-                    ->first();
-                if ($mentorCourse) {
-                    $mentorCourse->userId = $request->mentorId;
-                    $mentorCourse->courseId = $request->courseId;
-                    $mentorCourse->save();
-                }
-            }
+        $mentorCourse = MentorCourse::where('courseId', $courseId)->first();
+
+        if ($mentorCourse) {
+            $mentorCourse->userId = $request->mentorId;
+            $mentorCourse->update();
         }
         return response()->json('Course Updated Sucessfully');
     }
