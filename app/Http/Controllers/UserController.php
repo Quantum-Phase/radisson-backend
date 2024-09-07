@@ -95,12 +95,21 @@ class UserController extends Controller
 
         $dateString = $request->start_date;
         $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
-        $formattedDate = $date->format('Y-m-d H:i:s');
+        if ($date !== false) {
+            $formattedDate = $date->format('Y-m-d H:i:s');
+        } else {
+            // handle the case where the format is invalid
+            $formattedDate = null; // or some default value
+        }
 
         $dateString1 = $request->date;
         $date1 = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString1);
-        $formattedDate1 = $date1->format('Y-m-d H:i:s');
-
+        if ($date1 !== false) {
+            $formattedDate1 = $date1->format('Y-m-d H:i:s');
+        } else {
+            // handle the case where the format is invalid
+            $formattedDate1 = null; // or some default value
+        }
         $insertUser = new User;
         $insertUser->name = $request->name;
         $insertUser->email = $request->email;
