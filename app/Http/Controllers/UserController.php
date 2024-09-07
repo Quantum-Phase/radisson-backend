@@ -88,15 +88,15 @@ class UserController extends Controller
         $request->validate([
 
             'profileimg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'start_date' => 'required|date',
-            'date' => 'required|date',
+            'start_date' => 'required|date_format:Y-m-d',
+            'date' => 'required|date_format:Y-m-d',
         ]);
 
         $file = $request->file('profileimg');
         $imageName = time() . '.' . $file->extension();
         $file->move(public_path('profileImage'), $imageName);
 
-        $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d H:i:s');
+        $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d');
         $formattedDob = Carbon::parse($request->date)->format('Y-m-d');
 
         // $dateString = $request->start_date;
@@ -121,7 +121,6 @@ class UserController extends Controller
         $insertUser->name = $request->name;
         $insertUser->email = $request->email;
         $insertUser->password = Hash::make($request->password);
-        // $insertUser->password = Hash::make($this->generatedpassword($username));
         $insertUser->role = $request->role;
         $insertUser->phoneNo = $request->phoneNo;
         $insertUser->dob = $formattedDob;
@@ -132,7 +131,6 @@ class UserController extends Controller
         $insertUser->profileimg = 'profileImage/' . $imageName;
         $insertUser->emergencyContactNo = $request->econtact;
         $insertUser->parents_name = $request->parents_name;
-        // $insertUser->time = $request->;
         $insertUser->save();
 
         if ($request->role == 'student') {
@@ -189,8 +187,8 @@ class UserController extends Controller
             'temporaryAddress' => $data->temporaryAddress,
             'emergencyContactNo' => $data->emergencyContactNo,
             'parents_name' => $data->parents_name,
-            'batchId' => optional($data->studentBatch)->batchId,
-            'courseId' => optional($data->studentCourse)->courseId
+            'batchId' => optional($data->studentBatch->first())->batchId,
+            'courseId' => optional($data->studentCourse->first())->courseId
         ];
         return response()->json($data);
     }
