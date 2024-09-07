@@ -117,7 +117,7 @@ class CourseController extends Controller
                     ->where('userId', $mentorData['userId'])
                     ->first();
                 if ($mentorCourse) {
-                    $mentorCourse->userId = $request->userId;
+                    $mentorCourse->userId = $request->mentorId;
                     $mentorCourse->courseId = $request->courseId;
                     $mentorCourse->save();
                 }
