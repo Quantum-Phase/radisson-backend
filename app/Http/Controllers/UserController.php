@@ -190,7 +190,7 @@ class UserController extends Controller
             'batchId' => optional($data->studentBatch->first())->batchId,
             'courseId' => optional($data->studentCourse->first())->courseId
         ];
-        return response()->json($data);
+        return response()->json($response);
     }
 
     public function updateUser(Request $request, $userId)
