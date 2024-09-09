@@ -88,8 +88,8 @@ class UserController extends Controller
         $request->validate([
 
             'profileimg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'start_date' => 'required|date_format:Y-m-d',
-            'date' => 'required|date_format:Y-m-d',
+            'start_date' => 'date_format:Y-m-d',
+            'date' => 'date_format:Y-m-d',
         ]);
 
         $file = $request->file('profileimg');
