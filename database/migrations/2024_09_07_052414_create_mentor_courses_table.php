@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
 
-            $table->string('userId');
-            $table->string('courseId');
+            $table->foreignId('userId');
+            $table->foreignId('courseId');
         });
     }
 

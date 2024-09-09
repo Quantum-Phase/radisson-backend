@@ -16,8 +16,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('userId')->nullable(false);
-            $table->foreign('blockId')->nullable(false);
+            $table->foreignId('userId')->nullable(false);
+            $table->foreignId('blockId')->nullable(false);
         });
     }
 
