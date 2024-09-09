@@ -18,6 +18,7 @@ return new class extends Migration
             // $table->decimal('installment')->nullable();
             $table->integer('paid')->nullable();
             $table->integer('due')->nullable();
+            $table->string('receipt_no')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

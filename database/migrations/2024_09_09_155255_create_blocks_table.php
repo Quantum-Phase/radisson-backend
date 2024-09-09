@@ -11,15 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('batches', function (Blueprint $table) {
-            $table->id('batchId');
+        Schema::create('blocks', function (Blueprint $table) {
+            $table->id('blockId');
             $table->string('name')->nullable(false)->unique();
-            $table->date('start_date')->nullable(false);
-            $table->date('end_date')->nullable(false);
-            $table->boolean('isActive')->default(true);
-            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -28,7 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('batches');
-        Schema::dropSoftDeletes();
+        Schema::dropIfExists('blocks');
     }
 };
