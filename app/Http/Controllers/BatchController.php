@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Batch;
-
-
-
+use App\Models\BatchCourse;
+use App\Models\Course;
 use Illuminate\Http\Request;
+
 
 class BatchController extends Controller
 {
@@ -36,7 +36,11 @@ class BatchController extends Controller
             'batches.name',
             'batches.isActive',
             'batches.isDeleted',
-        );
+            'batch_courses.courseId',
+            'courses.name AS coursename'
+        )
+            ->leftJoin('batch_courses', 'batch_courses.batchId', '=', 'batches.batchId')
+            ->leftJoin('courses', 'courses.courseId', '=', 'batch_courses.courseId');
 
         // Add search filtering based on search query
         if ($search) {
@@ -56,11 +60,30 @@ class BatchController extends Controller
 
     public function insertBatch(Request $request)
     {
+        // Validate request
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'courseId' => 'required|exists:courses,courseId',
+        ]);
+
+
+        $course = Course::where('courseId', $request->courseId)->first();
+
+
         $batch = new Batch;
         $batch->name = $request->name;
+        $batch->start_date = $course->start_date;
+        $batch->time = $course->time;
         $batch->save();
-        return response()->json('Batch inserted sucessfully');
+
+        $batchcourse = new BatchCourse;
+        $batchcourse->courseId = $request->courseId;
+        $batchcourse->batchId = $batch->batchId;
+        $batchcourse->save();
+
+        return response()->json('Batch inserted successfully');
     }
+
 
     public function deleteBatch($batchId)
     {
@@ -80,6 +103,17 @@ class BatchController extends Controller
         $batch = Batch::find($batchId);
         $batch->name = $request->name;
         $batch->update();
+
+        $batchcourse = BatchCourse::where('batchId', $batchId)->first();
+        if ($batchcourse) {
+            $batchcourse->courseId = $request->courseId;
+            $batchcourse->update();
+        } else {
+            $batchcourse = new BatchCourse;
+            $batchcourse->courseId = $request->courseId;
+            $batchcourse->batchId = $batch->batchId;
+            $batchcourse->save();
+        }
         return response()->json('Batch Updated Sucessfully');
     }
 }

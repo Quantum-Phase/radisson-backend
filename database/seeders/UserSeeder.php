@@ -23,5 +23,11 @@ class UserSeeder extends Seeder
             'role' => 'superadmin',
             'phoneNo' => '9876543210'
         ]);
+
+        DB::table('blocks')->insert([
+            ['name' => 'Block A'],
+            ['name' => 'Block B'],
+
+        ]);
     }
 }

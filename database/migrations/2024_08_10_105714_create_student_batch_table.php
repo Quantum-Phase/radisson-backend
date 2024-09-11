@@ -19,11 +19,6 @@ return new class extends Migration
             // Foreign key constraints
 
             $table->foreignId('userId');
-            // $table->unsignedBigInteger('userId'); // Define the userId column to match the type in the `users` table
-            // $table->foreign('userId') // Define the foreign key constraint
-            //     ->references('userId')
-            //     ->on('users')
-            //     ->onDelete('cascade');
             $table->foreignId('batchId');
         });
     }

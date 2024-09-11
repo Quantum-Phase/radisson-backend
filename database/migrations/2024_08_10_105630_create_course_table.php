@@ -19,6 +19,9 @@ return new class extends Migration
             $table->integer('totalFee');
             $table->string('duration_unit');
             $table->integer('duration');
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->time('time')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

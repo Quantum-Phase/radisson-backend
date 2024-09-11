@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountantBlock;
 use App\Models\Course;
 use App\Models\CourseAssigned;
 use App\Models\StudentBatch;
@@ -99,24 +100,6 @@ class UserController extends Controller
         $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d');
         $formattedDob = Carbon::parse($request->date)->format('Y-m-d');
 
-        // $dateString = $request->start_date;
-        // $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
-        // if ($date !== false) {
-        //     $formattedDate = $date->format('Y-m-d H:i:s');
-        // } else {
-        //     // handle the case where the format is invalid
-        //     $formattedDate = null; // or some default value
-        // }
-
-        // $dateString1 = $request->date;
-        // $date1 = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString1);
-        // if ($date1 !== false) {
-        //     $formattedDate1 = $date1->format('Y-m-d H:i:s');
-        // } else {
-        //     // handle the case where the format is invalid
-        //     $formattedDate1 = null; // or some default value
-        // }
-
         $insertUser = new User;
         $insertUser->name = $request->name;
         $insertUser->email = $request->email;
@@ -127,7 +110,7 @@ class UserController extends Controller
         $insertUser->gender = $request->gender;
         $insertUser->permanentAddress = $request->paddress;
         $insertUser->temporaryAddress = $request->taddress;
-        $insertUser->startDate = $formattedStartDate;
+        // $insertUser->startDate = $formattedStartDate;
         $insertUser->profileimg = 'profileImage/' . $imageName;
         $insertUser->emergencyContactNo = $request->econtact;
         $insertUser->parents_name = $request->parents_name;
@@ -147,15 +130,17 @@ class UserController extends Controller
             $studentBatch->userId = $insertUser->userId;
             $studentBatch->save();
 
-            $studentCourse = new StudentCourse();
-            $studentCourse->userId = $insertUser->userId;
-            $studentCourse->courseId = $request->courseId;
-            $studentCourse->save();
+            // $studentCourse = new StudentCourse();
+            // $studentCourse->userId = $insertUser->userId;
+            // $studentCourse->courseId = $request->courseId;
+            // $studentCourse->save();
 
-            // $studentWork = new StudentWork;
-            // $studentWork->workId = $request->workId;
-            // $studentWork->userId = $insertUser->userId;
-            // $studentWork->save();
+            if ($request->role == 'accountant') {
+                $userBlock = new AccountantBlock;
+                $userBlock->userId = $insertUser->userId;
+                $userBlock->blockId = $request->blockId;
+                $userBlock->save();
+            }
         }
         return response()->json('User Inserted Sucessfully');
     }
@@ -189,8 +174,8 @@ class UserController extends Controller
             'temporaryAddress' => $data->temporaryAddress,
             'emergencyContactNo' => $data->emergencyContactNo,
             'parents_name' => $data->parents_name,
-            'startDate' => $data->startDate,
-            'time' => $data->time,
+            // 'startDate' => $data->startDate,
+            // 'time' => $data->time,
             'batch' => $data->studentBatch->transform(function ($studentBatch) {
                 return [
                     'batchId' => $studentBatch->batchId,
@@ -243,16 +228,16 @@ class UserController extends Controller
 
         $data->update();
 
-        $studentCourse = StudentCourse::where('userId', $userId)->first();
-        if ($studentCourse) {
-            $studentCourse->courseId = $request->courseId;
-            $studentCourse->update();
-        } else {
-            $studentCourse = new StudentCourse();
-            $studentCourse->userId = $userId;
-            $studentCourse->courseId = $request->courseId;
-            $studentCourse->save();
-        }
+        // $studentCourse = StudentCourse::where('userId', $userId)->first();
+        // if ($studentCourse) {
+        //     $studentCourse->courseId = $request->courseId;
+        //     $studentCourse->update();
+        // } else {
+        //     $studentCourse = new StudentCourse();
+        //     $studentCourse->userId = $userId;
+        //     $studentCourse->courseId = $request->courseId;
+        //     $studentCourse->save();
+        // }
 
         $studentsBatch = StudentBatch::where('userId', $userId)->first();
         if ($studentsBatch) {

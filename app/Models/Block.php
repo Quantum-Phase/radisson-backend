@@ -31,7 +31,7 @@ class Block extends Model
         return $this->hasMany(AccountantBlock::class, 'blockId');
     }
 
-    public function block()
+    public function user()
     {
         return $this->hasOne(User::class, 'userId');
     }

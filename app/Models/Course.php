@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
+
 
 class Course extends Model
 {
@@ -41,5 +44,10 @@ class Course extends Model
     public function mentorCourses(): HasMany
     {
         return $this->hasMany(MentorCourse::class, 'courseId');
+    }
+
+    public function batch(): HasOne
+    {
+        return $this->hasOne(Batch::class, 'batchId');
     }
 }

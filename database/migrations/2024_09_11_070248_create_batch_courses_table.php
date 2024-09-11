@@ -11,14 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_payments', function (Blueprint $table) {
+        Schema::create('batch_courses', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->softDeletes();
 
-            // Foreign key constraints
-            $table->foreignId('userId');
-            $table->foreignId('paymentId');
             $table->foreignId('batchId');
             $table->foreignId('courseId');
         });
@@ -29,7 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_payments');
-        Schema::dropSoftDeletes();
+        Schema::dropIfExists('batch_courses');
     }
 };

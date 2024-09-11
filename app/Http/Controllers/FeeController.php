@@ -34,8 +34,9 @@ class FeeController extends Controller
         $insertFee = new Payment;
         $insertFee->source = $request->source;
         $insertFee->amount = $request->amount;
-        $insertFee->installment = $request->installment;
-        $insertFee->paid = $request->paid;
+        $insertFee->payment_mode = $request->payment_mode;
+        // $insertFee->installment = $request->installment;
+        // $insertFee->paid = $request->paid;
         $insertFee->save();
         return response()->json('Payment Inserted Sucessfully');
     }

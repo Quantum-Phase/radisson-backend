@@ -73,6 +73,7 @@ class JobController extends Controller
         $insertJob->name = $request->name;
         $insertJob->start_date = $formattedDate;
         $insertJob->type = $request->type;
+        $insertJob->paid_amount = $request->paid_amount;
         $insertJob->save();
 
         //Insert Student in Job
@@ -110,6 +111,7 @@ class JobController extends Controller
         $jobs->name = $request->name;
         $jobs->start_date = $request->start_date;
         $jobs->type = $request->type;
+        $jobs->paid_amount = $request->paid_amount;
         $jobs->update();
 
         $studentJob = StudentWork::where('workId', $workId)->first();
