@@ -130,11 +130,6 @@ class UserController extends Controller
             $studentBatch->userId = $insertUser->userId;
             $studentBatch->save();
 
-            // $studentCourse = new StudentCourse();
-            // $studentCourse->userId = $insertUser->userId;
-            // $studentCourse->courseId = $request->courseId;
-            // $studentCourse->save();
-
             if ($request->role == 'accountant') {
                 $userBlock = new AccountantBlock;
                 $userBlock->userId = $insertUser->userId;
