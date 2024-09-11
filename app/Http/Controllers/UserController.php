@@ -133,13 +133,13 @@ class UserController extends Controller
             $studentBatch->batchId = $request->batchId;
             $studentBatch->userId = $insertUser->userId;
             $studentBatch->save();
+        }
 
-            if ($request->role == 'accountant') {
-                $userBlock = new AccountantBlock;
-                $userBlock->userId = $insertUser->userId;
-                $userBlock->blockId = $request->blockId;
-                $userBlock->save();
-            }
+        if ($request->role == 'accountant') {
+            $userBlock = new AccountantBlock;
+            $userBlock->userId = $insertUser->userId;
+            $userBlock->blockId = $request->blockId;
+            $userBlock->save();
         }
         return response()->json('User Inserted Sucessfully');
     }
