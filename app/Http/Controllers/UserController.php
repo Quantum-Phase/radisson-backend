@@ -61,9 +61,13 @@ class UserController extends Controller
             'users.parents_name',
             'student_batches.batchId',
             'batches.name AS batchname',
+            'accountant_blocks.blockId',
+            'blocks.name AS blockname',
         )
             ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
             ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
+            ->leftJoin('accountant_blocks', 'blocks.blockId', '=', 'accountant_blocks.blockId')
+            ->leftJoin('blocks', 'accountant_blocks.blockId', '=', 'blocks.blockId')
             ->when($roles, function ($query, $roles) {
                 return $query->whereIn('users.role', $roles);
             })
