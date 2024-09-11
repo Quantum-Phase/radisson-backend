@@ -154,7 +154,7 @@ class UserController extends Controller
 
     public function update($userId)
     {
-        $data = User::with(['studentBatch.batch', 'studentCourse.course', 'AccountantBlock.block'])->find($userId);
+        $data = User::with(['studentBatch.batch', 'studentCourse.course', 'accountantBlock.block'])->find($userId);
 
         if (!$data) {
             return response()->json(['message' => 'User not found'], 404);
@@ -174,28 +174,25 @@ class UserController extends Controller
             'emergencyContactNo' => $data->emergencyContactNo,
             'parents_name' => $data->parents_name,
 
-            'batch' => $data->studentBatch->transform(function ($studentBatch) {
-                return [
-                    'batchId' => $studentBatch->batchId,
-                    'batchName' => $studentBatch->batch->name,
-                ];
-            })->first(),
-            'course' => $data->studentCourse->transform(function ($studentCourse) {
-                return [
-                    'courseId' => $studentCourse->courseId,
-                    'courseName' => $studentCourse->course->name,
-                ];
-            })->first(),
-            'block' => $data->accountantBlock->transform(function ($accountantBlock) {
-                return [
-                    'blockId' => $accountantBlock->blockId,
-                    'blockName' => $accountantBlock->block->name,
-                ];
-            })->first(),
+            'batch' => $data->studentBatch->first() ? [
+                'batchId' => $data->studentBatch->first()->batchId,
+                'batchName' => $data->studentBatch->first()->batch->name ?? 'N/A',
+            ] : null,
+
+            'course' => $data->studentCourse->first() ? [
+                'courseId' => $data->studentCourse->first()->courseId,
+                'courseName' => $data->studentCourse->first()->course->name ?? 'N/A',
+            ] : null,
+
+            'block' => $data->accountantBlock->first() ? [
+                'blockId' => $data->accountantBlock->first()->blockId,
+                'blockName' => $data->accountantBlock->first()->block->name ?? 'N/A',
+            ] : null,
         ];
 
         return response()->json($response);
     }
+
 
 
     public function updateUser(Request $request, $userId)
