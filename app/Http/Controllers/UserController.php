@@ -154,7 +154,7 @@ class UserController extends Controller
 
     public function update($userId)
     {
-        $data = User::with(['studentBatch.batch', 'studentCourse.course'])->find($userId);
+        $data = User::with(['studentBatch.batch', 'studentCourse.course', 'AccountantBlock.block'])->find($userId);
 
         if (!$data) {
             return response()->json(['message' => 'User not found'], 404);
