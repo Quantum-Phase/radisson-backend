@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('accountant_blocks', function (Blueprint $table) {
-            $table->id('accountBlockId');
+            $table->id();
             $table->timestamps();
             $table->softDeletes();
 

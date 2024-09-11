@@ -173,8 +173,7 @@ class UserController extends Controller
             'temporaryAddress' => $data->temporaryAddress,
             'emergencyContactNo' => $data->emergencyContactNo,
             'parents_name' => $data->parents_name,
-            // 'startDate' => $data->startDate,
-            // 'time' => $data->time,
+
             'batch' => $data->studentBatch->transform(function ($studentBatch) {
                 return [
                     'batchId' => $studentBatch->batchId,
@@ -212,7 +211,7 @@ class UserController extends Controller
         $data->emergencyContactNo = $request->econtact;
         $data->parents_name = $request->parents_name;
         $data->startDate = $request->start_date;
-        $data->time = $request->time;
+        // $data->time = $request->time;
 
         if ($request->hasFile('profileimg')) {
             $request->validate([
@@ -254,6 +253,16 @@ class UserController extends Controller
             $studentBatch->batchId = $request->batchId;
             $studentBatch->userId = $userId;
             $studentBatch->save();
+        }
+        $AccountantBlock = AccountantBlock::where('userId', $userId)->first();
+        if ($AccountantBlock) {
+            $AccountantBlock->blockId = $request->blockId;
+            $AccountantBlock->update();
+        } else {
+            $AccountantBlock = new AccountantBlock;
+            $AccountantBlock->blockId = $request->blockId;
+            $AccountantBlock->userId = $userId;
+            $AccountantBlock->save();
         }
 
         return response()->json('User Updated Sucessfully');
