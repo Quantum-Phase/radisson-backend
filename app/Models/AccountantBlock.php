@@ -10,7 +10,6 @@ class AccountantBlock extends Model
     use HasFactory;
 
     protected $fillable = [
-        'accountBlockId',
         'userId',
         'blockId'
     ];

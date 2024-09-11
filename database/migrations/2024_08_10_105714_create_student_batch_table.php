@@ -19,7 +19,7 @@ return new class extends Migration
             // Foreign key constraints
 
             $table->foreignId('userId');
-            $table->foreignId('batchId');
+            $table->foreignId('batchId')->nullable();
         });
     }
 
