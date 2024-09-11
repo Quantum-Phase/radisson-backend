@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\FeeController;
 use App\Http\Controllers\JobController;
+use App\Http\Controllers\BlockController;
 use App\Models\StudentWork;
 use App\Models\Work;
 use Illuminate\Http\Request;
@@ -79,4 +80,7 @@ Route::group([
     Route::get('/batch/{batchId}', [BatchController::class, 'updateb'])->name('updateBatch');
     Route::put('/batch/{batchId}', [BatchController::class, 'updateBatch'])->name('UpdateBatch');
     Route::get('/searchbatch', [BatchController::class, 'searchBatch'])->name('SearchBatch');
+
+    //Route Block
+    Route::get('/block', [BlockController::class, 'showBlock'])->name("ShowBlock");
 });
