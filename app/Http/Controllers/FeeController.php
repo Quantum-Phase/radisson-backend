@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountantBlock;
+use App\Models\CourseFee;
 use App\Models\Payment;
+use App\Models\UserPayment;
+use Illuminate\Support\Facades\Auth;
+
 
 
 use Illuminate\Http\Request;
@@ -32,12 +37,26 @@ class FeeController extends Controller
     public function insertFee(Request $request)
     {
         $insertFee = new Payment;
-        $insertFee->source = $request->source;
+        // $insertFee->source = $request->source;
         $insertFee->amount = $request->amount;
         $insertFee->payment_mode = $request->payment_mode;
         // $insertFee->installment = $request->installment;
         // $insertFee->paid = $request->paid;
         $insertFee->save();
+
+        $receiptNo = 'RCT-' . $insertFee->feeId;
+        $insertFee->receipt_no = $receiptNo;
+        $insertFee->save();
+
+        $feeblock = new UserPayment;
+        $feeblock->userId = $request->userId;
+        $feeblock->feeId = $insertFee->feeId;
+        $feeblock->save();
+
+        $coursefee = new CourseFee;
+        $coursefee->courseId = $request->courseId;
+        $coursefee->feeId = $insertFee->feeId;
+        $coursefee->save();
         return response()->json('Payment Inserted Sucessfully');
     }
 

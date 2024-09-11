@@ -122,7 +122,7 @@ class UserController extends Controller
 
             // Update the student_code for the user
             $insertUser->student_code = $studentCode;
-            $insertUser->time = $request->time;
+            // $insertUser->time = $request->time;
             $insertUser->save();
 
             $studentBatch = new StudentBatch;
