@@ -60,10 +60,10 @@ class BatchController extends Controller
                     'courseId' => $course->courseId,
                     'name' => $course->name,
                     // Add any other course fields you need
-                    'mentor' => [
-                        'userId' => $course->mentor->userId,
-                        'name' => $course->mentor->name,
-                    ],
+                    // 'mentor' => [
+                    //     'userId' => $course->mentor->userId,
+                    //     'name' => $course->mentor->name,
+                    // ],
                 ];
             });
             unset($batch->courses); // Remove courses relationship to simplify the result
