@@ -46,8 +46,13 @@ class Course extends Model
         return $this->hasMany(MentorCourse::class, 'courseId');
     }
 
-    public function batch(): HasOne
+    // public function batch(): HasOne
+    // {
+    //     return $this->hasOne(Batch::class, 'batchId');
+    // }
+
+    public function batches(): HasMany
     {
-        return $this->hasOne(Batch::class, 'batchId');
+        return $this->hasMany(BatchCourse::class, 'courseId');
     }
 }

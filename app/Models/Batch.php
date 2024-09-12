@@ -43,4 +43,9 @@ class Batch extends Model
     {
         return $this->hasOne(Course::class, 'courseId');
     }
+
+    public function batchCourses()
+    {
+        return $this->hasMany(BatchCourse::class, 'batchId', 'batchId');
+    }
 }
