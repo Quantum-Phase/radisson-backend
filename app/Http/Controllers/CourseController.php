@@ -61,7 +61,7 @@ class CourseController extends Controller
                 return [
                     'userId' => $mentorCourse->user->userId,
                     'name' => $mentorCourse->user->name,
-                    // Add other user fields as needed
+
                 ];
             })->first(); // Get the first mentor's user object
             unset($course->mentorCourses); // Remove mentorCourses relationship to simplify the result

@@ -54,6 +54,21 @@ class BatchController extends Controller
         } else {
             $batch_data = $batch_data->get();
         }
+        $batch_data->transform(function ($batch) {
+            $batch->courses = $batch->courses->map(function ($course) {
+                return (object) [
+                    'courseId' => $course->courseId,
+                    'name' => $course->name,
+                    // Add any other course fields you need
+                    'mentor' => [
+                        'userId' => $course->mentor->userId,
+                        'name' => $course->mentor->name,
+                    ],
+                ];
+            });
+            unset($batch->courses); // Remove courses relationship to simplify the result
+            return $batch;
+        });
 
         return response()->json($batch_data);
     }
