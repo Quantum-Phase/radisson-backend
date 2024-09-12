@@ -57,14 +57,16 @@ class BatchController extends Controller
         } else {
             $batch_data = $batch_data->get();
         }
-        // Transform data to return courses as objects
+        // Transform data to return courses as objects, handling null values
         $batch_data->transform(function ($batch) {
-            $batch->courses = $batch->batchCourses->map(function ($batchCourse) {
+            // Ensure batchCourses is not null before calling map
+            $batch->courses = $batch->batchCourses ? $batch->batchCourses->map(function ($batchCourse) {
                 return (object) [
-                    'courseId' => $batchCourse->course->courseId,
-                    'name' => $batchCourse->course->name,
+                    'courseId' => $batchCourse->course->courseId ?? null,
+                    'name' => $batchCourse->course->name ?? null,
                 ];
-            });
+            }) : []; // If null, set courses to an empty array
+
             unset($batch->batchCourses);
             return $batch;
         });
