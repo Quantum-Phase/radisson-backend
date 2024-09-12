@@ -64,6 +64,8 @@ class BatchController extends Controller
                 return [
                     'courseId' => $batchCourse->course->courseId ?? null,
                     'name' => $batchCourse->course->name ?? null,
+                    'duration' => $batchCourse->course->duration ?? null,
+
                 ];
             }) : []; // If null, set courses to an empty array
 
