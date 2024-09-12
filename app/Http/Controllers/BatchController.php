@@ -31,32 +31,24 @@ class BatchController extends Controller
         $limit = (int)$request->limit;
         $search = $request->search;
 
-        $batch_data = Batch::select(
-            'batches.batchId',
-            'batches.name',
-            'batches.isActive',
-            'batches.isDeleted',
-            'batches.time',
-            'batches.start_date',
-            'batches.end_date',
-            'batch_courses.courseId',
-            'courses.name AS coursename'
-        )
-            ->leftJoin('batch_courses', 'batch_courses.batchId', '=', 'batches.batchId')
-            ->leftJoin('courses', 'courses.courseId', '=', 'batch_courses.courseId');
+        // Fetch batches with batchCourses and course details
+        $batch_data = Batch::with(['batchCourses.course' => function ($query) {
+            $query->select('courseId', 'name'); // Include only relevant fields
+        }])
+            ->select('batchId', 'name', 'isActive', 'isDeleted', 'time', 'start_date', 'end_date');
 
-        // Add search filtering based on search query
+        // Add search filtering based on the query
         if ($search) {
-            $batch_data = $batch_data->where(function ($subquery) use ($search) {
-                $subquery->where('batches.name', 'like', "%$search%");
-            });
+            $batch_data = $batch_data->where('name', 'like', "%$search%");
         }
 
-        if ($request->has('limit')) {
+        // Add pagination if the limit is provided
+        if ($request->has('limit') && $limit > 0) {
             $batch_data = $batch_data->paginate($limit);
         } else {
             $batch_data = $batch_data->get();
         }
+
         // Transform data to return courses as objects, handling null values
         $batch_data->transform(function ($batch) {
             // Ensure batchCourses is not null before calling map
@@ -67,13 +59,13 @@ class BatchController extends Controller
                 ];
             }) : []; // If null, set courses to an empty array
 
-            unset($batch->batchCourses);
+            unset($batch->batchCourses); // Remove batchCourses relationship to simplify the result
             return $batch;
         });
 
-
         return response()->json($batch_data);
     }
+
 
     public function insertBatch(Request $request)
     {
