@@ -74,16 +74,11 @@ class CourseController extends Controller
     public function insertCourse(Request $request)
     {
 
-        $request->validate([
-
-            'start_date' => 'date_format:Y-m-d',
-        ]);
-        $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d');
 
         $course = new Course;
         $course->name = $request->name;
         $course->totalFee = $request->tfee;
-        $course->start_date = $formattedStartDate;
+        // $course->start_date = $formattedStartDate;
         $course->duration_unit = $request->dunit;
         $course->duration = $request->duration;
         if ($request->dunit == 'months') {

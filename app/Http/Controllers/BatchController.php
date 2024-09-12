@@ -6,7 +6,7 @@ use App\Models\Batch;
 use App\Models\BatchCourse;
 use App\Models\Course;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Carbon;
 
 class BatchController extends Controller
 {
@@ -60,11 +60,13 @@ class BatchController extends Controller
 
     public function insertBatch(Request $request)
     {
-        // Validate request
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
             'courseId' => 'required|exists:courses,courseId',
+            'start_date' => 'date_format:Y-m-d',
         ]);
+        $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d');
+
 
 
         $course = Course::where('courseId', $request->courseId)->first();
@@ -72,7 +74,7 @@ class BatchController extends Controller
 
         $batch = new Batch;
         $batch->name = $request->name;
-        $batch->start_date = $course->start_date;
+        $batch->start_date = $formattedStartDate;
         $batch->time = $course->time;
         $batch->save();
 

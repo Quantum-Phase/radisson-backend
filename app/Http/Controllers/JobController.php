@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\StudentWork;
 use App\Models\Work;
-
+use Illuminate\Support\Carbon;
 
 use Illuminate\Http\Request;
 
@@ -65,13 +65,14 @@ class JobController extends Controller
     }
     public function insertJob(Request $request)
     {
-        $dateString = $request->start_date;
-        $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
-        $formattedDate = $date->format('Y-m-d H:i:s');
+        // $dateString = $request->start_date;
+        // $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
+        // $formattedDate = $date->format('Y-m-d H:i:s');
+        $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d');
 
         $insertJob = new Work();
         $insertJob->name = $request->name;
-        $insertJob->start_date = $formattedDate;
+        $insertJob->start_date = $formattedStartDate;
         $insertJob->type = $request->type;
         $insertJob->paid_amount = $request->paid_amount;
         $insertJob->save();
