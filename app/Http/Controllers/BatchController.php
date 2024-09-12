@@ -61,7 +61,7 @@ class BatchController extends Controller
         // Transform data to return courses as objects, handling null values
         $batch_data->transform(function ($batch) {
             // Ensure batchCourses is not null before calling map
-            $batch->courses = $batch->batchCourses ? $batch->batchCourses->map(function ($batchCourse) {
+            $batch->course = $batch->batchCourses ? $batch->batchCourses->map(function ($batchCourse) {
                 return [
                     'courseId' => $batchCourse->course->courseId ?? null,
                     'name' => $batchCourse->course->name ?? null,
