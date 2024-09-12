@@ -42,15 +42,16 @@ class BatchController extends Controller
             'batch_courses.courseId',
             'courses.name AS coursename'
         )
-            ->leftJoin('batch_courses', 'batch_courses.batchId', '=', 'batches.batchId')
-            ->leftJoin('courses', 'courses.courseId', '=', 'batch_courses.courseId');
-
-        // Add search filtering based on search query
-        if ($search) {
-            $batch_data = $batch_data->where(function ($subquery) use ($search) {
-                $subquery->where('batches.name', 'like', "%$search%");
+            ->with('batchCourses.course')
+            ->when($search, function ($query, $search) {
+                return $query->where('name', 'like', "%$search%");
             });
-        }
+        // Add search filtering based on search query
+        // if ($search) {
+        //     $batch_data = $batch_data->where(function ($subquery) use ($search) {
+        //         $subquery->where('batches.name', 'like', "%$search%");
+        //     });
+        // }
 
         if ($request->has('limit')) {
             $batch_data = $batch_data->paginate($limit);
