@@ -68,7 +68,7 @@ class BatchController extends Controller
                     'duration' => $batchCourse->course->duration ?? null,
 
                 ];
-            }) : []; // If null, set courses to an empty array
+            })->first() : []; // If null, set courses to an empty array
 
             unset($batch->batchCourses);
             return $batch;
