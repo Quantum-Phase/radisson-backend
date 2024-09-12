@@ -36,7 +36,8 @@ class JobController extends Controller
             'start_date',
             'type',
             'isActive',
-            'isDeleted'
+            'isDeleted',
+            'paid_amount'
         )
             ->with(['studentWork.user'])
             ->when($search, function ($query, $search) {
