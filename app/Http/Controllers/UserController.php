@@ -176,17 +176,17 @@ class UserController extends Controller
 
             'batch' => $data->studentBatch->first() ? [
                 'batchId' => $data->studentBatch->first()->batchId,
-                'batchName' => $data->studentBatch->first()->batch->name ?? 'N/A',
+                'name' => $data->studentBatch->first()->batch->name ?? 'N/A',
             ] : null,
 
             'course' => $data->studentCourse->first() ? [
                 'courseId' => $data->studentCourse->first()->courseId,
-                'courseName' => $data->studentCourse->first()->course->name ?? 'N/A',
+                'name' => $data->studentCourse->first()->course->name ?? 'N/A',
             ] : null,
 
             'block' => $data->accountantBlock->first() ? [
                 'blockId' => $data->accountantBlock->first()->blockId,
-                'blockName' => $data->accountantBlock->first()->block->name ?? 'N/A',
+                'name' => $data->accountantBlock->first()->block->name ?? 'N/A',
             ] : null,
         ];
 
