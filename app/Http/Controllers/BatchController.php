@@ -93,7 +93,7 @@ class BatchController extends Controller
         $batch->name = $request->name;
         $batch->start_date = $formattedStartDate;
         $batch->time = $request->time;
-        if ($course->dunit == 'months' || $course->dunit == 'month') {
+        if ($course->dunit == 'months') {
             $batch->end_date = Carbon::parse($request->start_date)->addMonths($course->duration)->format('Y-m-d');
         } else {
             $batch->end_date = Carbon::parse($request->start_date)->addDays($course->duration)->format('Y-m-d');
