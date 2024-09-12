@@ -67,15 +67,18 @@ class BatchController extends Controller
         ]);
         $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d');
 
-
-
         $course = Course::where('courseId', $request->courseId)->first();
-
 
         $batch = new Batch;
         $batch->name = $request->name;
         $batch->start_date = $formattedStartDate;
-        $batch->time = $course->time;
+        $batch->time = $request->time;
+        if ($course->dunit == 'months') {
+            $batch->end_date = Carbon::parse($request->start_date)->addMonths($request->duration)->format('Y-m-d');
+        } else {
+            $batch->end_date = Carbon::parse($request->start_date)->addDays($request->duration)->format('Y-m-d');
+        }
+
         $batch->save();
 
         $batchcourse = new BatchCourse;

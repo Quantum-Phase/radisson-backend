@@ -73,19 +73,12 @@ class CourseController extends Controller
 
     public function insertCourse(Request $request)
     {
-
-
         $course = new Course;
         $course->name = $request->name;
         $course->totalFee = $request->tfee;
-        // $course->start_date = $formattedStartDate;
         $course->duration_unit = $request->dunit;
         $course->duration = $request->duration;
-        if ($request->dunit == 'months') {
-            $course->end_date = Carbon::parse($request->start_date)->addMonths($request->duration)->format('Y-m-d');
-        } else {
-            $course->end_date = Carbon::parse($request->start_date)->addDays($request->duration)->format('Y-m-d');
-        }
+
         $course->save();
 
         //Insert Mentor in Course
