@@ -36,6 +36,9 @@ class BatchController extends Controller
             'batches.name',
             'batches.isActive',
             'batches.isDeleted',
+            'batches.time',
+            'batches.start_date',
+            'batches.end_date',
             'batch_courses.courseId',
             'courses.name AS coursename'
         )
@@ -54,21 +57,18 @@ class BatchController extends Controller
         } else {
             $batch_data = $batch_data->get();
         }
+        // Transform data to return courses as objects
         $batch_data->transform(function ($batch) {
-            $batch->courses = $batch->courses->map(function ($course) {
+            $batch->courses = $batch->batchCourses->map(function ($batchCourse) {
                 return (object) [
-                    'courseId' => $course->courseId,
-                    'name' => $course->name,
-                    // Add any other course fields you need
-                    // 'mentor' => [
-                    //     'userId' => $course->mentor->userId,
-                    //     'name' => $course->mentor->name,
-                    // ],
+                    'courseId' => $batchCourse->course->courseId,
+                    'name' => $batchCourse->course->name,
                 ];
             });
-            unset($batch->courses); // Remove courses relationship to simplify the result
+            unset($batch->batchCourses);
             return $batch;
         });
+
 
         return response()->json($batch_data);
     }
