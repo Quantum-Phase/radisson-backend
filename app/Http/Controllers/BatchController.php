@@ -39,8 +39,8 @@ class BatchController extends Controller
             'batches.time',
             'batches.start_date',
             'batches.end_date',
-            'batch_courses.courseId',
-            'courses.name AS coursename'
+            // 'batch_courses.courseId',
+            // 'courses.name AS coursename'
         )
             ->with('batchCourses.course')
             ->when($search, function ($query, $search) {
