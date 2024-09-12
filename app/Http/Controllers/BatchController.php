@@ -105,6 +105,14 @@ class BatchController extends Controller
 
     public function updateBatch(Request $request, $batchId)
     {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'courseId' => 'required|exists:courses,courseId',
+            'start_date' => 'date_format:Y-m-d',
+        ]);
+        $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d');
+
+        $course = Course::where('courseId', $request->courseId)->first();
         $batch = Batch::find($batchId);
         $batch->name = $request->name;
         $batch->update();
@@ -112,6 +120,13 @@ class BatchController extends Controller
         $batchcourse = BatchCourse::where('batchId', $batchId)->first();
         if ($batchcourse) {
             $batchcourse->courseId = $request->courseId;
+            $batch->start_date = $formattedStartDate;
+            $batch->time = $request->time;
+            if ($course->dunit == 'months') {
+                $batch->end_date = Carbon::parse($request->start_date)->addMonths($request->duration)->format('Y-m-d');
+            } else {
+                $batch->end_date = Carbon::parse($request->start_date)->addDays($request->duration)->format('Y-m-d');
+            }
             $batchcourse->update();
         } else {
             $batchcourse = new BatchCourse;
