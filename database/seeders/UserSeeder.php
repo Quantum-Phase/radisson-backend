@@ -21,7 +21,7 @@ class UserSeeder extends Seeder
             'student_code' => "RadAdmin",
             'password' => Hash::make('Aadmin@123'),
             'role' => 'superadmin',
-            'phoneNo' => '9876543210'
+            'phoneNo' => '+9779876543210'
         ]);
 
         DB::table('blocks')->insert([

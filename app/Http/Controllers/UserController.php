@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Log;
 
 
 
@@ -92,7 +93,7 @@ class UserController extends Controller
     {
         $request->validate([
 
-            'profileimg' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'profileimg' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'start_date' => 'date_format:Y-m-d',
             'date' => 'date_format:Y-m-d',
         ]);
@@ -152,7 +153,7 @@ class UserController extends Controller
         return response()->json('User Deleted Sucessfully');
     }
 
-    public function update($userId)
+    public function singleUser($userId)
     {
         $data = User::with(['studentBatch.batch', 'studentCourse.course', 'accountantBlock.block'])->find($userId);
 
@@ -177,23 +178,28 @@ class UserController extends Controller
             'batch' => $data->studentBatch->first() ? [
                 'batchId' => $data->studentBatch->first()->batchId,
                 'name' => $data->studentBatch->first()->batch->name ?? 'N/A',
-            ] : null,
-
-            'course' => $data->studentCourse->first() ? [
-                'courseId' => $data->studentCourse->first()->courseId,
-                'name' => $data->studentCourse->first()->course->name ?? 'N/A',
+                'course' => $data->studentBatch->first() ? ($data->studentBatch->first()->batch ? $data->studentBatch->first()->batch->load('course')->course : null) : null,
+                'start_date' => $data->studentBatch->first()->batch->start_date ?? null,
+                'end_date' => $data->studentBatch->first()->batch->end_date ?? null,
+                'time' => $data->studentBatch->first()->batch->time ?? null,
             ] : null,
 
             'block' => $data->accountantBlock->first() ? [
                 'blockId' => $data->accountantBlock->first()->blockId,
                 'name' => $data->accountantBlock->first()->block->name ?? 'N/A',
             ] : null,
+
+            'internshipJob' => $data->studentWork->first() ? [
+                'workId' => $data->studentWork->first()->work ? $data->studentWork->first()->work->workId : null,
+                'name' => $data->studentWork->first()->work ? $data->studentWork->first()->work->name ?? 'N/A' : null,
+                'type' => $data->studentWork->first()->work ? $data->studentWork->first()->work->type ?? 'N/A' : null,
+                'start_date' => $data->studentWork->first()->work ? $data->studentWork->first()->work->start_date ?? 'N/A' : null,
+                'paid_amount' => $data->studentWork->first()->work ? $data->studentWork->first()->work->paid_amount ?? 'N/A' : null,
+            ] : null,
         ];
 
         return response()->json($response);
     }
-
-
 
     public function updateUser(Request $request, $userId)
     {
@@ -211,9 +217,6 @@ class UserController extends Controller
         // $data->time = $request->time;
 
         if ($request->hasFile('profileimg')) {
-            $request->validate([
-                'profileimg' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            ]);
 
             if ($data->profileimg && file_exists(public_path($data->profileimg))) {
                 unlink(public_path($data->profileimg));
@@ -251,20 +254,111 @@ class UserController extends Controller
             $studentBatch->userId = $userId;
             $studentBatch->save();
         }
-        $AccountantBlock = AccountantBlock::where('userId', $userId)->first();
-        if ($AccountantBlock) {
-            $AccountantBlock->blockId = $request->blockId;
-            $AccountantBlock->update();
-        } else {
-            $AccountantBlock = new AccountantBlock;
-            $AccountantBlock->blockId = $request->blockId;
-            $AccountantBlock->userId = $userId;
-            $AccountantBlock->save();
+
+        if($request->blockId) {
+            $AccountantBlock = AccountantBlock::where('userId', $userId)->first();
+            if ($AccountantBlock) {
+                $AccountantBlock->blockId = $request->blockId;
+                $AccountantBlock->update();
+            } else {
+                $AccountantBlock = new AccountantBlock;
+                $AccountantBlock->blockId = $request->blockId;
+                $AccountantBlock->userId = $userId;
+                $AccountantBlock->save();
+            }
         }
 
         return response()->json('User Updated Sucessfully');
     }
+
+    public function updateProfile(Request $request)
+    {
+        $userdata = auth()->user();
+        
+        if (!$userdata) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+    
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'phoneNo' => 'required|string',
+            'gender' => 'required|string',
+            'profileimg' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+    
+        $userdata->name = $request->name;
+        $userdata->email = $request->email;
+        $userdata->phoneNo = $request->phoneNo;
+        $userdata->gender = $request->gender;
+    
+        if ($request->hasFile('profileimg')) {
+            if ($userdata->profileimg && file_exists(public_path($userdata->profileimg))) {
+                unlink(public_path($userdata->profileimg));
+            }
+    
+            $file = $request->file('profileimg');
+            $imageName = time() . '.' . $file->extension();
+            $file->move(public_path('profileImage'), $imageName);
+    
+            $userdata->profileimg = 'profileImage/' . $imageName;
+        }
+    
+        $userdata->update();
+    
+        $response = (object)[
+            'userId' => $userdata->userId,
+            'name' => $userdata->name,
+            'email' => $userdata->email,
+            'phoneNo' => $userdata->phoneNo,
+            'dob' => $userdata->dob,
+            'gender' => $userdata->gender,
+            'role' => $userdata->role,
+            'profileImg' => $userdata->profileImg,
+            'permanentAddress' => $userdata->permanentAddress,
+            'temporaryAddress' => $userdata->temporaryAddress,
+            'emergencyContactNo' => $userdata->emergencyContactNo,
+            'parents_name' => $userdata->parents_name,
+    
+            'block' => $userdata->accountantBlock->first() ? [
+                'blockId' => $userdata->accountantBlock->first()->blockId,
+                'name' => $userdata->accountantBlock->first()->block->name ?? 'N/A',
+            ] : null,
+        ];
+    
+        return response()->json($response);
+    
+    }
+
+    public function changePassword(Request $request)
+        {
+            $userdata = auth()->user();
+
+            if (!$userdata) {
+                return response()->json(['message' => 'User not found'], 404);
+            }
+
+            $request->validate([
+                'oldPassword' => 'required|string',
+                'password' => 'required|string|min:8',
+                'confirmPassword' => 'required|string|min:8',
+            ]);
+
+            if (!Hash::check($request->oldPassword, $userdata->password)) {
+                return response()->json(['message' => 'Old password is incorrect'], 422);
+            }
+
+            if($request->password !== $request->confirmPassword) {
+                return response()->json(['message' => 'New password and confirm password does not match.'], 422);
+            }
+
+            $userdata->password = Hash::make($request->password);
+            $userdata->update();
+
+            return response()->json(['message' => 'Password changed successfully']);
+        }
 }
+
 
 
 /*

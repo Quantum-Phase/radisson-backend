@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Batch;
 use App\Models\BatchCourse;
 use App\Models\Course;
+use App\Models\StudentBatch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -126,10 +127,19 @@ class BatchController extends Controller
         return response()->json('Batch Deleted Sucessfully');
     }
 
-    public function updateb($batchId)
+    public function singleBatch($batchId)
     {
-        $batch = Batch::find($batchId);
-        return response()->json($batch);
+        $batch_data = Batch::find($batchId);
+        $batch_data->course = $batch_data->batchCourses ? $batch_data->batchCourses->map(function ($batchCourse) {
+            return [
+                'courseId' => $batchCourse->course->courseId ?? null,
+                'name' => $batchCourse->course->name ?? null,
+                'duration' => $batchCourse->course->duration ?? null,
+            ];
+        })->first() : []; // If null, set courses to an empty array
+    
+        unset($batch_data->batchCourses);
+        return response()->json($batch_data);
     }
 
     public function updateBatch(Request $request, $batchId)
@@ -165,5 +175,39 @@ class BatchController extends Controller
             $batchcourse->save();
         }
         return response()->json('Batch Updated Sucessfully');
+    }
+
+    public function studentsByBatch(Request $request, $batchId)
+    {
+        $limit = (int)$request->limit;
+        $search = $request->search;
+    
+        $students = StudentBatch::where('batchId', $batchId)
+            ->with('user') // eager load the user relationship
+            ->when($search, function ($query) use ($search) {
+                $query->whereHas('user', function ($subquery) use ($search) {
+                    $subquery->where('name', 'like', "%$search%")
+                        ->orWhere('email', 'like', "%$search%");
+                });
+            });
+    
+        if ($request->has('limit')) {
+            $students = $students->paginate($limit);
+        } else {
+            $students = $students->get();
+        }
+    
+        // Transform data to return student details
+        $students->transform(function ($student) {
+            return [
+                'userId' => $student->user->userId ?? null,
+                'name' => $student->user->name ?? null,
+                'email' => $student->user->email ?? null,
+                'phoneNo' => $student->user->phoneNo ?? null,
+                'created_at' => $student->user->created_at ?? null
+            ];
+        });
+    
+        return response()->json($students);
     }
 }
