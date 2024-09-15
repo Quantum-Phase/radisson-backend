@@ -43,9 +43,11 @@ Route::group([
     Route::get('/user', [UserController::class, 'showUser'])->name('showUser');
     Route::post('/user', [UserController::class, 'insertUser'])->name('insertUser');
     Route::delete('/user/{userId}', [UserController::class, 'deleteUser'])->name('deleteUser');
-    Route::get('/user/{userId}', [UserController::class, 'update'])->name('update');
+    Route::get('/user/{userId}', [UserController::class, 'singleUser'])->name('singleUser');
     Route::put('/user/{userId}', [UserController::class, 'updateUser'])->name('updateUser');
     Route::get('/searchuser', [UserController::class, 'searchUser'])->name('SearchUser');
+    Route::post('/profile', [UserController::class, 'updateProfile'])->name('updateProfile');
+    Route::post('/change-password', [UserController::class, 'changePassword'])->name('changePassword');
 
     //Route Course
     Route::get('/course', [CourseController::class, 'showCourse'])->name("ShowCourse");
@@ -77,9 +79,10 @@ Route::group([
     Route::get('/batch', [BatchController::class, 'showBatch'])->name("ShowBatch");
     Route::post('/batch', [BatchController::class, 'insertBatch'])->name('InsertBatch');
     Route::delete('/batch/{batchId}', [BatchController::class, 'deleteBatch'])->name('DeleteBatch');
-    Route::get('/batch/{batchId}', [BatchController::class, 'updateb'])->name('updateBatch');
+    Route::get('/batch/{batchId}', [BatchController::class, 'singleBatch'])->name('SingleBatch');
     Route::put('/batch/{batchId}', [BatchController::class, 'updateBatch'])->name('UpdateBatch');
     Route::get('/searchbatch', [BatchController::class, 'searchBatch'])->name('SearchBatch');
+    Route::get('/batch/students/{batchId}', [BatchController::class, 'studentsByBatch'])->name('StudentsByBatch');
 
     //Route Block
     Route::get('/block', [BlockController::class, 'showBlock'])->name("ShowBlock");
