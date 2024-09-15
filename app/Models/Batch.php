@@ -27,25 +27,32 @@ class Batch extends Model
     // Set to false if primary key is not an integer
     protected $keyType = 'int'; // or 'string' if using a non-integer key
 
+    public function studentBatches(): HasMany
+    {
+        return $this->hasMany(StudentBatch::class, 'batchId');
+    }
 
-    public function MentorBatches(): HasMany
+    // Relation with MentorBatch (mentors assigned to this batch)
+    public function mentorBatches(): HasMany
     {
         return $this->hasMany(MentorBatch::class, 'batchId');
     }
 
-    // Define the relationship to the User model through StudentBatch
-    public function users(): HasManyThrough
+    // Define the relationship to Users through StudentBatch
+    public function students(): HasManyThrough
+    {
+        return $this->hasManyThrough(User::class, StudentBatch::class, 'batchId', 'userId');
+    }
+
+    // Define the relationship to Users through MentorBatch
+    public function mentors(): HasManyThrough
     {
         return $this->hasManyThrough(User::class, MentorBatch::class, 'batchId', 'userId');
     }
 
-    public function course(): HasOne
+    // Relation to BatchCourse
+    public function batchCourses(): HasMany
     {
-        return $this->hasOne(Course::class, 'courseId');
-    }
-
-    public function batchCourses()
-    {
-        return $this->hasMany(BatchCourse::class, 'batchId', 'batchId');
+        return $this->hasMany(BatchCourse::class, 'batchId');
     }
 }

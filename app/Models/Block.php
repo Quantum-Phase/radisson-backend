@@ -33,6 +33,6 @@ class Block extends Model
     // Assuming a Block can have multiple users
     public function users(): HasMany
     {
-        return $this->hasMany(User::class, 'blockId'); // Adjust foreign key if necessary
+        return $this->hasMany(User::class, 'blockId');
     }
 }

@@ -94,6 +94,10 @@ class CourseController extends Controller
     public function deleteCourse($courseId)
     {
         $course = Course::find($courseId);
+        // Check if any users are assigned to the course through StudentCourse
+        if ($course->users()->count() > 0) {
+            return response()->json(['error' => 'Cannot delete course. It is assigned to one or more users.'], 400);
+        }
         $course->delete();
         return response()->json('Course Deleted Sucessfully');
     }

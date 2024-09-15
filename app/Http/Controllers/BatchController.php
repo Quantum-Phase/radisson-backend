@@ -113,6 +113,15 @@ class BatchController extends Controller
     public function deleteBatch($batchId)
     {
         $batch = Batch::find($batchId);
+        // if (!$batch) {
+        //     return response()->json(['message' => 'Batch not found'], 404);
+        // }
+        // if ($batch) {
+        //     dd($batch->students()); // This will dump the users for the batch
+        // }
+        if ($batch->students()->count() > 0) {
+            return response()->json(['error' => 'Cannot delete batch. It is assigned to one or more users.'], 400);
+        }
         $batch->delete();
         return response()->json('Batch Deleted Sucessfully');
     }
