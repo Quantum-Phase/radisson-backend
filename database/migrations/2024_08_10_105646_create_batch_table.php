@@ -13,12 +13,14 @@ return new class extends Migration
     {
         Schema::create('batches', function (Blueprint $table) {
             $table->id('batchId');
-            $table->string('name')->nullable(false)->unique();
+            $table->string('name')->nullable(false);
             $table->boolean('isActive')->default(true);
             $table->boolean('isDeleted')->default(false);
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
             $table->time('time')->nullable();
+            $table->unsignedBigInteger('courseId')->nullable();
+            $table->foreign('courseId')->references('courseId')->on('courses')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
         });

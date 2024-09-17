@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Batch;
-use App\Models\BatchCourse;
 use App\Models\Course;
 use App\Models\StudentBatch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
 
 class BatchController extends Controller
 {
@@ -40,41 +41,18 @@ class BatchController extends Controller
             'batches.time',
             'batches.start_date',
             'batches.end_date',
-            // 'batch_courses.courseId',
-            // 'courses.name AS coursename'
+            'batches.courseId',
         )
-            ->with('batchCourses.course')
+            ->with('course')
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'like', "%$search%");
             });
-        // Add search filtering based on search query
-        // if ($search) {
-        //     $batch_data = $batch_data->where(function ($subquery) use ($search) {
-        //         $subquery->where('batches.name', 'like', "%$search%");
-        //     });
-        // }
 
         if ($request->has('limit')) {
             $batch_data = $batch_data->paginate($limit);
         } else {
             $batch_data = $batch_data->get();
         }
-        // Transform data to return courses as objects, handling null values
-        $batch_data->transform(function ($batch) {
-            // Ensure batchCourses is not null before calling map
-            $batch->course = $batch->batchCourses ? $batch->batchCourses->map(function ($batchCourse) {
-                return [
-                    'courseId' => $batchCourse->course->courseId ?? null,
-                    'name' => $batchCourse->course->name ?? null,
-                    'duration' => $batchCourse->course->duration ?? null,
-
-                ];
-            })->first() : []; // If null, set courses to an empty array
-
-            unset($batch->batchCourses);
-            return $batch;
-        });
-
 
         return response()->json($batch_data);
     }
@@ -82,7 +60,12 @@ class BatchController extends Controller
     public function insertBatch(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('batches', 'name')->whereNull('deleted_at'),
+            ],        
             'courseId' => 'required|exists:courses,courseId',
             'start_date' => 'date_format:Y-m-d',
         ]);
@@ -94,6 +77,8 @@ class BatchController extends Controller
         $batch->name = $request->name;
         $batch->start_date = $formattedStartDate;
         $batch->time = $request->time;
+        $batch->courseId = $request->courseId;
+
         if ($course->duration_unit == 'months') {
             $batch->end_date = Carbon::parse($request->start_date)->addMonths($course->duration)->format('Y-m-d');
         } else {
@@ -102,50 +87,37 @@ class BatchController extends Controller
 
         $batch->save();
 
-        $batchcourse = new BatchCourse;
-        $batchcourse->courseId = $request->courseId;
-        $batchcourse->batchId = $batch->batchId;
-        $batchcourse->save();
-
         return response()->json('Batch inserted successfully');
     }
-
 
     public function deleteBatch($batchId)
     {
         $batch = Batch::find($batchId);
-        // if (!$batch) {
-        //     return response()->json(['message' => 'Batch not found'], 404);
-        // }
-        // if ($batch) {
-        //     dd($batch->students()); // This will dump the users for the batch
-        // }
         if ($batch->students()->count() > 0) {
-            return response()->json(['error' => 'Cannot delete batch. It is assigned to one or more users.'], 400);
+            return response()->json(['message' => 'Cannot delete batch. It is assigned to one or more users.'], 400);
         }
-        $batch->delete();
+        $batch->deleted_at = now();
+        $batch->save();
         return response()->json('Batch Deleted Sucessfully');
     }
 
     public function singleBatch($batchId)
     {
         $batch_data = Batch::find($batchId);
-        $batch_data->course = $batch_data->batchCourses ? $batch_data->batchCourses->map(function ($batchCourse) {
-            return [
-                'courseId' => $batchCourse->course->courseId ?? null,
-                'name' => $batchCourse->course->name ?? null,
-                'duration' => $batchCourse->course->duration ?? null,
-            ];
-        })->first() : []; // If null, set courses to an empty array
-    
-        unset($batch_data->batchCourses);
+        $batch_data->course = $batch_data->course()->first();
+
         return response()->json($batch_data);
     }
 
     public function updateBatch(Request $request, $batchId)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('batches', 'name')->ignore($batchId, 'batchId')->whereNull('deleted_at'),
+            ],
             'courseId' => 'required|exists:courses,courseId',
             'start_date' => 'date_format:Y-m-d',
         ]);
@@ -156,6 +128,8 @@ class BatchController extends Controller
         $batch->name = $request->name;
         $batch->start_date = $formattedStartDate;
         $batch->time = $request->time;
+        $batch->courseId = $request->courseId;
+
         if ($course->duration_unit == 'months') {
             $batch->end_date = Carbon::parse($request->start_date)->addMonths($course->duration)->format('Y-m-d');
         } else {
@@ -163,17 +137,6 @@ class BatchController extends Controller
         }
         $batch->update();
 
-        $batchcourse = BatchCourse::where('batchId', $batchId)->first();
-        if ($batchcourse) {
-            $batchcourse->courseId = $request->courseId;
-
-            $batchcourse->update();
-        } else {
-            $batchcourse = new BatchCourse;
-            $batchcourse->courseId = $request->courseId;
-            $batchcourse->batchId = $batch->batchId;
-            $batchcourse->save();
-        }
         return response()->json('Batch Updated Sucessfully');
     }
 
@@ -181,7 +144,7 @@ class BatchController extends Controller
     {
         $limit = (int)$request->limit;
         $search = $request->search;
-    
+
         $students = StudentBatch::where('batchId', $batchId)
             ->with('user') // eager load the user relationship
             ->when($search, function ($query) use ($search) {
@@ -190,13 +153,13 @@ class BatchController extends Controller
                         ->orWhere('email', 'like', "%$search%");
                 });
             });
-    
+
         if ($request->has('limit')) {
             $students = $students->paginate($limit);
         } else {
             $students = $students->get();
         }
-    
+
         // Transform data to return student details
         $students->transform(function ($student) {
             return [
@@ -207,7 +170,7 @@ class BatchController extends Controller
                 'created_at' => $student->user->created_at ?? null
             ];
         });
-    
+
         return response()->json($students);
     }
 }

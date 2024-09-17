@@ -205,14 +205,10 @@ class UserController extends Controller
     {
         $request->validate([
             'email' => [
-                Rule::unique('users', 'email')->where(function ($query) use ($userId) {
-                    return $query->where('userId', '!=', $userId);
-                }),
+                Rule::unique('users', 'email')->ignore($userId, 'userId')->whereNull('deleted_at'),
             ],
             'phoneNo' => [
-                Rule::unique('users', 'phoneNo')->where(function ($query) use ($userId) {
-                    return $query->where('userId', '!=', $userId);
-                }),
+                Rule::unique('users', 'phoneNo')->ignore($userId, 'userId')->whereNull('deleted_at'),
             ],
         ]);
 

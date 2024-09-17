@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Batch extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -32,11 +32,11 @@ class Batch extends Model
         return $this->hasMany(StudentBatch::class, 'batchId');
     }
 
-    // Relation with MentorBatch (mentors assigned to this batch)
-    public function mentorBatches(): HasMany
-    {
-        return $this->hasMany(MentorBatch::class, 'batchId');
-    }
+    // // Relation with MentorBatch (mentors assigned to this batch)
+    // public function mentorBatches(): HasMany
+    // {
+    //     return $this->hasMany(MentorBatch::class, 'batchId');
+    // }
 
     // Define the relationship to Users through StudentBatch
     public function students(): HasManyThrough
@@ -44,15 +44,8 @@ class Batch extends Model
         return $this->hasManyThrough(User::class, StudentBatch::class, 'batchId', 'userId');
     }
 
-    // Define the relationship to Users through MentorBatch
-    public function mentors(): HasManyThrough
+    public function course()
     {
-        return $this->hasManyThrough(User::class, MentorBatch::class, 'batchId', 'userId');
-    }
-
-    // Relation to BatchCourse
-    public function batchCourses(): HasMany
-    {
-        return $this->hasMany(BatchCourse::class, 'batchId');
+        return $this->belongsTo(Course::class, 'courseId');
     }
 }
