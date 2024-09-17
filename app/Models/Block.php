@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Block extends Model
 {
@@ -24,11 +23,6 @@ class Block extends Model
 
     // Set to false if primary key is not an integer
     protected $keyType = 'int'; // or 'string' if using a non-integer key
-
-    public function accountantBlocks(): HasMany
-    {
-        return $this->hasMany(AccountantBlock::class, 'blockId');
-    }
 
     // Assuming a Block can have multiple users
     public function users(): HasMany

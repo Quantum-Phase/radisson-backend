@@ -12,10 +12,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -34,7 +35,8 @@ class User extends Authenticatable implements JWTSubject
         'temporaryAddress',
         'emergencyContactNo',
         'startDate',
-        'profileimg'
+        'profileimg',
+        'blockId'
     ];
 
     /**
@@ -112,12 +114,16 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(StudentWork::class, 'userId');
     }
 
-    public function accountantBlock(): HasMany
-    {
-        return $this->hasMany(AccountantBlock::class, 'userId');
-    }
     public function block()
     {
-        return $this->hasOne(Block::class, 'blockId');
+        return $this->belongsTo(Block::class, 'blockId');
+    }
+    public function hasRole($role)
+    {
+        return $this->role === $role;
+    }
+    public function mentorCourses(): HasMany
+    {
+        return $this->hasMany(MentorCourse::class, 'userId');
     }
 }

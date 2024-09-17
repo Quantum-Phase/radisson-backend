@@ -2,20 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AccountantBlock;
-use App\Models\Course;
-use App\Models\CourseAssigned;
 use App\Models\StudentBatch;
-use App\Models\StudentCourse;
-use App\Models\StudentWork;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\View\View;
-use Illuminate\Support\Facades\Log;
-
+use Illuminate\Validation\Rule;
 
 
 class UserController extends Controller
@@ -92,10 +84,11 @@ class UserController extends Controller
     public function insertUser(Request $request)
     {
         $request->validate([
-
             'profileimg' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'start_date' => 'date_format:Y-m-d',
             'date' => 'date_format:Y-m-d',
+            'email' => 'unique:users,email,NULL,deleted_at',
+            'phoneNo' => 'unique:users,phoneNo,NULL,deleted_at',
         ]);
 
         $file = $request->file('profileimg');
@@ -119,6 +112,11 @@ class UserController extends Controller
         $insertUser->profileimg = 'profileImage/' . $imageName;
         $insertUser->emergencyContactNo = $request->econtact;
         $insertUser->parents_name = $request->parents_name;
+
+        if ($insertUser->hasRole('accountant')) {
+            $insertUser->blockId = $request->blockId;
+        }
+
         $insertUser->save();
 
         if ($request->role == 'student') {
@@ -136,26 +134,32 @@ class UserController extends Controller
             $studentBatch->save();
         }
 
-        if ($request->role == 'accountant') {
-            $userBlock = new AccountantBlock;
-            $userBlock->userId = $insertUser->userId;
-            $userBlock->blockId = $request->blockId;
-            $userBlock->save();
-        }
         return response()->json('User Inserted Sucessfully');
     }
 
-
     public function deleteUser($userId)
     {
+        $user = User::find($userId);
+        if (!$user) {
+            return response()->json('User not found', 404);
+        }
+
+        if ($user->hasRole('mentor')) {
+            $mentorCourses = $user->mentorCourses;
+            if ($mentorCourses->count() > 0) {
+                return response()->json(['message' => 'Cannot delete mentor, they are assigned to courses'], 422);
+            }
+        }
+
         $data = User::find($userId);
-        $data->delete();
+        $data->deleted_at = now();
+        $data->save();
         return response()->json('User Deleted Sucessfully');
     }
 
     public function singleUser($userId)
     {
-        $data = User::with(['studentBatch.batch', 'studentCourse.course', 'accountantBlock.block'])->find($userId);
+        $data = User::with(['studentBatch.batch', 'studentCourse.course'])->find($userId);
 
         if (!$data) {
             return response()->json(['message' => 'User not found'], 404);
@@ -174,6 +178,7 @@ class UserController extends Controller
             'temporaryAddress' => $data->temporaryAddress,
             'emergencyContactNo' => $data->emergencyContactNo,
             'parents_name' => $data->parents_name,
+            'block' => $data->block()->first(),
 
             'batch' => $data->studentBatch->first() ? [
                 'batchId' => $data->studentBatch->first()->batchId,
@@ -182,11 +187,6 @@ class UserController extends Controller
                 'start_date' => $data->studentBatch->first()->batch->start_date ?? null,
                 'end_date' => $data->studentBatch->first()->batch->end_date ?? null,
                 'time' => $data->studentBatch->first()->batch->time ?? null,
-            ] : null,
-
-            'block' => $data->accountantBlock->first() ? [
-                'blockId' => $data->accountantBlock->first()->blockId,
-                'name' => $data->accountantBlock->first()->block->name ?? 'N/A',
             ] : null,
 
             'internshipJob' => $data->studentWork->first() ? [
@@ -203,6 +203,19 @@ class UserController extends Controller
 
     public function updateUser(Request $request, $userId)
     {
+        $request->validate([
+            'email' => [
+                Rule::unique('users', 'email')->where(function ($query) use ($userId) {
+                    return $query->where('userId', '!=', $userId);
+                }),
+            ],
+            'phoneNo' => [
+                Rule::unique('users', 'phoneNo')->where(function ($query) use ($userId) {
+                    return $query->where('userId', '!=', $userId);
+                }),
+            ],
+        ]);
+
         $data = User::find($userId);
         $data->name = $request->name;
         $data->email = $request->email;
@@ -215,6 +228,10 @@ class UserController extends Controller
         $data->parents_name = $request->parents_name;
         $data->startDate = $request->start_date;
         // $data->time = $request->time;
+
+        if ($data->hasRole('accountant')) {
+            $data->blockId = $request->blockId;
+        }
 
         if ($request->hasFile('profileimg')) {
 
@@ -232,17 +249,6 @@ class UserController extends Controller
 
         $data->update();
 
-        // $studentCourse = StudentCourse::where('userId', $userId)->first();
-        // if ($studentCourse) {
-        //     $studentCourse->courseId = $request->courseId;
-        //     $studentCourse->update();
-        // } else {
-        //     $studentCourse = new StudentCourse();
-        //     $studentCourse->userId = $userId;
-        //     $studentCourse->courseId = $request->courseId;
-        //     $studentCourse->save();
-        // }
-
         $studentsBatch = StudentBatch::where('userId', $userId)->first();
         if ($studentsBatch) {
             $studentsBatch->batchId = $request->batchId;
@@ -255,30 +261,32 @@ class UserController extends Controller
             $studentBatch->save();
         }
 
-        if($request->blockId) {
-            $AccountantBlock = AccountantBlock::where('userId', $userId)->first();
-            if ($AccountantBlock) {
-                $AccountantBlock->blockId = $request->blockId;
-                $AccountantBlock->update();
-            } else {
-                $AccountantBlock = new AccountantBlock;
-                $AccountantBlock->blockId = $request->blockId;
-                $AccountantBlock->userId = $userId;
-                $AccountantBlock->save();
-            }
-        }
-
         return response()->json('User Updated Sucessfully');
     }
 
     public function updateProfile(Request $request)
     {
-        $userdata = auth()->user();
-        
+        $user = auth()->user();
+        $userId = $user->userId;
+
+        $request->validate([
+            'email' => [
+                Rule::unique('users', 'email')->where(function ($query) use ($userId) {
+                    return $query->where('userId', '!=', $userId);
+                }),
+            ],
+            'phoneNo' => [
+                Rule::unique('users', 'phoneNo')->where(function ($query) use ($userId) {
+                    return $query->where('userId', '!=', $userId);
+                }),
+            ],
+        ]);
+        $userdata = User::with(['studentBatch.batch', 'studentCourse.course'])->find($user->userId);
+
         if (!$userdata) {
             return response()->json(['message' => 'User not found'], 404);
         }
-    
+
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email',
@@ -286,26 +294,28 @@ class UserController extends Controller
             'gender' => 'required|string',
             'profileimg' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-    
+
         $userdata->name = $request->name;
         $userdata->email = $request->email;
         $userdata->phoneNo = $request->phoneNo;
         $userdata->gender = $request->gender;
-    
+
         if ($request->hasFile('profileimg')) {
             if ($userdata->profileimg && file_exists(public_path($userdata->profileimg))) {
                 unlink(public_path($userdata->profileimg));
             }
-    
+
             $file = $request->file('profileimg');
             $imageName = time() . '.' . $file->extension();
             $file->move(public_path('profileImage'), $imageName);
-    
+
             $userdata->profileimg = 'profileImage/' . $imageName;
         }
-    
-        $userdata->update();
-    
+
+        if ($userdata) {
+            $userdata->save();
+        }
+
         $response = (object)[
             'userId' => $userdata->userId,
             'name' => $userdata->name,
@@ -319,47 +329,42 @@ class UserController extends Controller
             'temporaryAddress' => $userdata->temporaryAddress,
             'emergencyContactNo' => $userdata->emergencyContactNo,
             'parents_name' => $userdata->parents_name,
-    
-            'block' => $userdata->accountantBlock->first() ? [
-                'blockId' => $userdata->accountantBlock->first()->blockId,
-                'name' => $userdata->accountantBlock->first()->block->name ?? 'N/A',
-            ] : null,
+            'block' => $userdata->block()->first(),
         ];
-    
+
         return response()->json($response);
-    
     }
 
     public function changePassword(Request $request)
-        {
-            $userdata = auth()->user();
+    {
+        $user = auth()->user();
 
-            if (!$userdata) {
-                return response()->json(['message' => 'User not found'], 404);
-            }
+        $userdata = User::with(['studentBatch.batch', 'studentCourse.course'])->find($user->userId);
 
-            $request->validate([
-                'oldPassword' => 'required|string',
-                'password' => 'required|string|min:8',
-                'confirmPassword' => 'required|string|min:8',
-            ]);
-
-            if (!Hash::check($request->oldPassword, $userdata->password)) {
-                return response()->json(['message' => 'Old password is incorrect'], 422);
-            }
-
-            if($request->password !== $request->confirmPassword) {
-                return response()->json(['message' => 'New password and confirm password does not match.'], 422);
-            }
-
-            $userdata->password = Hash::make($request->password);
-            $userdata->update();
-
-            return response()->json(['message' => 'Password changed successfully']);
+        if (!$userdata) {
+            return response()->json(['message' => 'User not found'], 404);
         }
+
+        $request->validate([
+            'oldPassword' => 'required|string',
+            'password' => 'required|string|min:8',
+            'confirmPassword' => 'required|string|min:8',
+        ]);
+
+        if (!Hash::check($request->oldPassword, $userdata->password)) {
+            return response()->json(['message' => 'Old password is incorrect'], 422);
+        }
+
+        if ($request->password !== $request->confirmPassword) {
+            return response()->json(['message' => 'New password and confirm password does not match.'], 422);
+        }
+
+        $userdata->password = Hash::make($request->password);
+        $userdata->update();
+
+        return response()->json(['message' => 'Password changed successfully']);
+    }
 }
-
-
 
 /*
 {
