@@ -32,12 +32,6 @@ class Batch extends Model
         return $this->hasMany(StudentBatch::class, 'batchId');
     }
 
-    // // Relation with MentorBatch (mentors assigned to this batch)
-    // public function mentorBatches(): HasMany
-    // {
-    //     return $this->hasMany(MentorBatch::class, 'batchId');
-    // }
-
     // Define the relationship to Users through StudentBatch
     public function students(): HasManyThrough
     {

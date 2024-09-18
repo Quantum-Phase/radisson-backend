@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Course extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -26,17 +27,6 @@ class Course extends Model
 
     // Set to false if primary key is not an integer
     protected $keyType = 'int'; // or 'string' if using a non-integer key
-
-    public function StudentCourse(): HasMany
-    {
-        return $this->hasMany(StudentCourse::class, 'courseId');
-    }
-
-    // Define the relationship to the User model through StudentBatch
-    public function users(): HasManyThrough
-    {
-        return $this->hasManyThrough(User::class, StudentCourse::class, 'courseId', 'userId');
-    }
 
     public function mentorCourses(): HasMany
     {

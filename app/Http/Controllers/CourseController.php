@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Batch;
 use App\Models\Course;
 use App\Models\MentorCourse;
 use App\Models\User;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Carbon;
-
+use Illuminate\Validation\Rule;
 
 class CourseController extends Controller
 {
@@ -72,6 +73,9 @@ class CourseController extends Controller
 
     public function insertCourse(Request $request)
     {
+        $request->validate([
+            Rule::unique('courses', 'name')->whereNull('deleted_at'),
+        ]);
         $course = new Course;
         $course->name = $request->name;
         $course->totalFee = $request->tfee;
@@ -92,12 +96,18 @@ class CourseController extends Controller
 
     public function deleteCourse($courseId)
     {
-        $course = Course::find($courseId);
-        // Check if any users are assigned to the course through StudentCourse
-        if ($course->users()->count() > 0) {
-            return response()->json(['error' => 'Cannot delete course. It is assigned to one or more users.'], 400);
+        $batches = Batch::where('courseId', $courseId)->get();
+
+        if($batches->count() > 0) {
+            return response()->json(['message' => 'Cannot delete course, they are assigned to batches'], 422);
         }
-        $course->delete();
+
+        $course = Course::find($courseId);
+        $course->deleted_at = now();
+        $course->save();
+
+        MentorCourse::where('courseId', $courseId)->delete(); // Add this line
+
         return response()->json('Course Deleted Sucessfully');
     }
 
@@ -109,6 +119,12 @@ class CourseController extends Controller
 
     public function updateCourse(Request $request, $courseId)
     {
+        $request->validate([
+            'name' => [
+                Rule::unique('courses', 'name')->ignore($courseId, 'courseId')->whereNull('deleted_at'),
+            ],
+        ]);
+
         $course = Course::find($courseId);
         $course->name = $request->name;
         $course->totalFee = $request->tfee;

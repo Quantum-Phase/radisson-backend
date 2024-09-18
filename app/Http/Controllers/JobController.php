@@ -64,6 +64,7 @@ class JobController extends Controller
 
         return response()->json($job);
     }
+    
     public function insertJob(Request $request)
     {
         // $dateString = $request->start_date;
@@ -89,7 +90,11 @@ class JobController extends Controller
     public function deleteJob(Request $request, $workId)
     {
         $jobs = Work::find($workId);
-        $jobs->delete();
+        $jobs->deleted_at = now();
+        $jobs->save();
+
+        StudentWork::where('workId', $workId)->delete(); // Add this line
+
         return response()->json('Internship/Job Deleted Sucessfully');
     }
 

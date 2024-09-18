@@ -151,15 +151,27 @@ class UserController extends Controller
             }
         }
 
+        if ($user->hasRole('student')) {
+            $studentWork = $user->studentWork;
+            if ($studentWork->count() > 0) {
+                return response()->json(['message' => 'Cannot delete student, they are assigned to internship/job'], 422);
+            }
+        }
+
         $data = User::find($userId);
         $data->deleted_at = now();
         $data->save();
+
+        if ($user->hasRole('student')) {
+            StudentBatch::where('userId', $userId)->delete(); // Add this line
+        }
+
         return response()->json('User Deleted Sucessfully');
     }
 
     public function singleUser($userId)
     {
-        $data = User::with(['studentBatch.batch', 'studentCourse.course'])->find($userId);
+        $data = User::with(['studentBatch.batch'])->find($userId);
 
         if (!$data) {
             return response()->json(['message' => 'User not found'], 404);
@@ -267,17 +279,13 @@ class UserController extends Controller
 
         $request->validate([
             'email' => [
-                Rule::unique('users', 'email')->where(function ($query) use ($userId) {
-                    return $query->where('userId', '!=', $userId);
-                }),
+                Rule::unique('users', 'email')->ignore($userId, 'userId')->whereNull('deleted_at'),
             ],
             'phoneNo' => [
-                Rule::unique('users', 'phoneNo')->where(function ($query) use ($userId) {
-                    return $query->where('userId', '!=', $userId);
-                }),
+                Rule::unique('users', 'phoneNo')->ignore($userId, 'userId')->whereNull('deleted_at'),
             ],
         ]);
-        $userdata = User::with(['studentBatch.batch', 'studentCourse.course'])->find($user->userId);
+        $userdata = User::with(['studentBatch.batch'])->find($user->userId);
 
         if (!$userdata) {
             return response()->json(['message' => 'User not found'], 404);
@@ -335,7 +343,7 @@ class UserController extends Controller
     {
         $user = auth()->user();
 
-        $userdata = User::with(['studentBatch.batch', 'studentCourse.course'])->find($user->userId);
+        $userdata = User::with(['studentBatch.batch'])->find($user->userId);
 
         if (!$userdata) {
             return response()->json(['message' => 'User not found'], 404);
