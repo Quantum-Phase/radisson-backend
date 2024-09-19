@@ -8,7 +8,6 @@ use App\Models\StudentBatch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Unique;
 
 class BatchController extends Controller
 {
@@ -105,6 +104,12 @@ class BatchController extends Controller
     {
         $batch_data = Batch::find($batchId);
         $batch_data->course = $batch_data->course()->first();
+
+        $studentBatch = StudentBatch::where("batchId", $batchId);
+
+        if($studentBatch->count() > 0) {
+            $batch_data->disable_course = true;
+        }
 
         return response()->json($batch_data);
     }

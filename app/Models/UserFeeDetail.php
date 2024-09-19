@@ -4,24 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Payment extends Model
+class UserFeeDetail extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+
     protected $fillable = [
-        'paymentId',
-        'amount',
-        'payedBy',
+        'userId',
         'courseId',
-        'receipt_no',
-        'payment_mode',
-        'blockId',
-        'recievedBy'
+        'amountToBePaid',
+        'totalAmountPaid',
+        'remainingAmount'
     ];
 
     // Specify the primary key for the model
-    protected $primaryKey = 'paymentId'; // Custom primary key
+    protected $primaryKey = 'userFeeDetailId'; // Custom primary key
 
     // Set to true if primary key is incrementing (default behavior)
     public $incrementing = true;
@@ -29,7 +26,8 @@ class Payment extends Model
     // Set to false if primary key is not an integer
     protected $keyType = 'int'; // or 'string' if using a non-integer key
 
-    public function payer()
+
+    public function user()
     {
         return $this->belongsTo(User::class, 'userId');
     }
@@ -37,15 +35,5 @@ class Payment extends Model
     public function course()
     {
         return $this->belongsTo(Course::class, 'courseId');
-    }
-
-    public function receivedBy()
-    {
-        return $this->belongsTo(User::class, 'userId');
-    }
-
-    public function block()
-    {
-        return $this->belongsTo(Block::class, 'blockId');
     }
 }

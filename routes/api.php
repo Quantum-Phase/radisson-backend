@@ -7,6 +7,8 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\FeeController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\BlockController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\UserFeeDetailController;
 use App\Models\StudentWork;
 use App\Models\Work;
 use Illuminate\Http\Request;
@@ -86,4 +88,11 @@ Route::group([
 
     //Route Block
     Route::get('/block', [BlockController::class, 'showBlock'])->name("ShowBlock");
+
+    //Route User Fee Detail
+    Route::get('/user-fee-detail/{userId}', [UserFeeDetailController::class, 'show'])->name("show");
+
+     //Route Payment
+     Route::get('/payment', [PaymentController::class, 'index'])->name("index");
+     Route::post('/payment', [PaymentController::class, 'create'])->name("create");
 });

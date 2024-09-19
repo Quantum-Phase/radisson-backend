@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Batch;
 use App\Models\StudentBatch;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\UserFeeDetail;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -132,6 +134,16 @@ class UserController extends Controller
             $studentBatch->batchId = $request->batchId;
             $studentBatch->userId = $insertUser->userId;
             $studentBatch->save();
+
+            $batch = Batch::find($request->batchId);
+            $course = $batch->course()->first();
+
+            $userFeeDetail = new UserFeeDetail();
+            $userFeeDetail->userId = $insertUser->userId;
+            $userFeeDetail->courseId = $course->courseId;
+            $userFeeDetail->amountToBePaid = $course->totalFee;
+            $userFeeDetail->remainingAmount = $course->totalFee;
+            $userFeeDetail->save();
         }
 
         return response()->json('User Inserted Sucessfully');
