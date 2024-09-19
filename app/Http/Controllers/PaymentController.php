@@ -17,23 +17,23 @@ class PaymentController extends Controller
     {
         $limit = (int)$request->limit;
         $search = $request->search;
-    
+
         $payments = Payment::select('payments.*')
-                          ->join('users', 'payments.payed_by', '=', 'users.userId')
-                          ->join('courses', 'payments.courseId', '=', 'courses.courseId')
-                          ->addSelect(['user' => User::select('name')->whereColumn('userId', 'payments.payed_by')])
-                          ->addSelect(['course' => Course::select('name')->whereColumn('courseId', 'payments.courseId')])
-                          ->where(function ($query) use ($search) {
-                              $query->where('users.name', 'like', '%' . $search . '%')
-                                    ->orWhere('courses.name', 'like', '%' . $search . '%');
-                          });
-    
+            ->join('users', 'payments.payed_by', '=', 'users.userId')
+            ->join('courses', 'payments.courseId', '=', 'courses.courseId')
+            ->addSelect(['user' => User::select('name')->whereColumn('userId', 'payments.payed_by')])
+            ->addSelect(['course' => Course::select('name')->whereColumn('courseId', 'payments.courseId')])
+            ->where(function ($query) use ($search) {
+                $query->where('users.name', 'like', '%' . $search . '%')
+                    ->orWhere('courses.name', 'like', '%' . $search . '%');
+            });
+
         if ($request->has('limit')) {
             $payments = $payments->paginate($limit);
         } else {
             $payments = $payments->get();
         }
-    
+
         return response()->json($payments);
     }
 
@@ -59,22 +59,24 @@ class PaymentController extends Controller
         $payment->recieved_by = $request->recieved_by;
         $payment->blockId = $request->blockId;
         $payment->remarks = $request->remarks;
+        $payment->name = $request->name;
+        $payment->type = $request->type;
 
         $payment->save();
+        if ($request->type == 'credit' && $request->payed_by) {
+            $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->first();
 
-        $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->first();
+            if (!$userFeeDetail) {
+                return response()->json(['message' => 'User Fee detail not found'], 404);
+            }
 
-        if (!$userFeeDetail) {
-            return response()->json(['message' => 'User Fee detail not found'], 404);
+            if ($userFeeDetail->remainingAmount < $request->amount) {
+                return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 404);
+            }
+
+            $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
+            $userFeeDetail->update();
         }
-
-        if ($userFeeDetail->remainingAmount < $request->amount) {
-            return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 404);
-        }
-
-        $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
-        $userFeeDetail->update();
-
         return response()->json('Payment inserted successfully');
     }
 

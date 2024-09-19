@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id('paymentId');
+            $table->string('name')->nullable(false);
+            $table->string('type')->nullable(false);
             $table->integer('amount')->nullable(false);
             $table->unsignedBigInteger('payed_by');
             $table->foreign('payed_by')->references('userId')->on('users')->onDelete('cascade');
