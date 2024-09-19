@@ -55,4 +55,8 @@ class Batch extends Model
     {
         return $this->hasMany(BatchCourse::class, 'batchId');
     }
+    public function courseBatches(): HasManyThrough
+    {
+        return $this->hasManyThrough(Batch::class, MentorCourse::class, 'courseId', 'batchId');
+    }
 }

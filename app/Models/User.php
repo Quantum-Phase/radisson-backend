@@ -12,6 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -119,5 +120,19 @@ class User extends Authenticatable implements JWTSubject
     public function block()
     {
         return $this->hasOne(Block::class, 'blockId');
+    }
+
+    // public function mentorCourse(): HasMany
+    // {
+    //     return $this->hasMany(MentorCourse::class, 'userId');
+    // }
+    // public function courseMentors(): HasManyThrough
+    // {
+    //     return $this->hasManyThrough(User::class, MentorCourse::class, 'courseId', 'userId');
+    // }
+
+    public function paymentDetail(): HasOne
+    {
+        return $this->hasOne(PaymentDetail::class, 'userId');
     }
 }

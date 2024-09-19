@@ -37,11 +37,9 @@ class FeeController extends Controller
     public function insertFee(Request $request)
     {
         $insertFee = new Payment;
-        // $insertFee->source = $request->source;
         $insertFee->amount = $request->amount;
         $insertFee->payment_mode = $request->payment_mode;
-        // $insertFee->installment = $request->installment;
-        // $insertFee->paid = $request->paid;
+        $insertFee->payment_made = $request->payment_made;
         $insertFee->save();
 
         $receiptNo = 'RCT-' . $insertFee->feeId;
@@ -51,6 +49,7 @@ class FeeController extends Controller
         $feeblock = new UserPayment;
         $feeblock->userId = $request->userId;
         $feeblock->feeId = $insertFee->feeId;
+        $feeblock->feeId = $request->batchId;
         $feeblock->save();
 
         $coursefee = new CourseFee;
@@ -60,21 +59,21 @@ class FeeController extends Controller
         return response()->json('Payment Inserted Sucessfully');
     }
 
-    public function deleteFee($feeId)
-    {
-        $deleteFee = Payment::find($feeId);
-        $deleteFee->delete();
-        return response()->json('Payment Deleted Sucessfully');
-    }
+    // public function deleteFee($feeId)
+    // {
+    //     $deleteFee = Payment::find($feeId);
+    //     $deleteFee->delete();
+    //     return response()->json('Payment Deleted Sucessfully');
+    // }
 
-    public function updateFee(Request $request, $feeId)
-    {
-        $updateFee = Payment::find($feeId);
-        $updateFee->source = $request->source;
-        $updateFee->amount = $request->amount;
-        $updateFee->installment = $request->installment;
-        $updateFee->paid = $request->paid;
-        $updateFee->update();
-        return response()->json('User payment Updated Sucessfully');
-    }
+    // public function updateFee(Request $request, $feeId)
+    // {
+    //     $updateFee = Payment::find($feeId);
+    //     $updateFee->source = $request->source;
+    //     $updateFee->amount = $request->amount;
+    //     $updateFee->installment = $request->installment;
+    //     $updateFee->paid = $request->paid;
+    //     $updateFee->update();
+    //     return response()->json('User payment Updated Sucessfully');
+    // }
 }

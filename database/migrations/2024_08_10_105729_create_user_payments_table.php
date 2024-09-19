@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('userId');
             $table->foreignId('paymentId');
             $table->foreignId('batchId');
-            $table->foreignId('courseId');
+            // $table->foreignId('courseId');
         });
     }
 

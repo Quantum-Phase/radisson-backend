@@ -114,13 +114,8 @@ class BatchController extends Controller
     public function deleteBatch($batchId)
     {
         $batch = Batch::find($batchId);
-        // if (!$batch) {
-        //     return response()->json(['message' => 'Batch not found'], 404);
-        // }
-        // if ($batch) {
-        //     dd($batch->students()); // This will dump the users for the batch
-        // }
-        if ($batch->students()->count() > 0) {
+        // dd($batch->students());
+        if ($batch->students()->count() > 0 || $batch->courseBatches()->count() > 0) {
             return response()->json(['error' => 'Cannot delete batch. It is assigned to one or more users.'], 400);
         }
         $batch->delete();
@@ -137,7 +132,7 @@ class BatchController extends Controller
                 'duration' => $batchCourse->course->duration ?? null,
             ];
         })->first() : []; // If null, set courses to an empty array
-    
+
         unset($batch_data->batchCourses);
         return response()->json($batch_data);
     }
@@ -181,7 +176,7 @@ class BatchController extends Controller
     {
         $limit = (int)$request->limit;
         $search = $request->search;
-    
+
         $students = StudentBatch::where('batchId', $batchId)
             ->with('user') // eager load the user relationship
             ->when($search, function ($query) use ($search) {
@@ -190,13 +185,13 @@ class BatchController extends Controller
                         ->orWhere('email', 'like', "%$search%");
                 });
             });
-    
+
         if ($request->has('limit')) {
             $students = $students->paginate($limit);
         } else {
             $students = $students->get();
         }
-    
+
         // Transform data to return student details
         $students->transform(function ($student) {
             return [
@@ -207,7 +202,7 @@ class BatchController extends Controller
                 'created_at' => $student->user->created_at ?? null
             ];
         });
-    
+
         return response()->json($students);
     }
 }

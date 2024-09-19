@@ -11,7 +11,8 @@ class UserPayment extends Model
 
     protected $fillable = [
         'userId',
-        'feeId'
+        'feeId',
+        'batchId'
     ];
 
     public function user()
@@ -22,5 +23,10 @@ class UserPayment extends Model
     public function fee()
     {
         return $this->belongsTo(Payment::class, 'paymentId');
+    }
+
+    public function batch()
+    {
+        return $this->belongsTo(Batch::class, 'batchId');
     }
 }

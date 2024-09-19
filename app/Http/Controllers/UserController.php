@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AccountantBlock;
 use App\Models\Course;
 use App\Models\CourseAssigned;
+use App\Models\MentorCourse;
 use App\Models\StudentBatch;
 use App\Models\StudentCourse;
 use App\Models\StudentWork;
@@ -149,7 +150,14 @@ class UserController extends Controller
     public function deleteUser($userId)
     {
         $data = User::find($userId);
-        $data->delete();
+        $user_role = $data->role;
+        if ($user_role == 'mentor' && MentorCourse::where('userId', $userId)->exists()) {
+            return response()->json(['message' => 'Mentor is already assigned to a course']);
+        } elseif ($user_role == 'accountant' && AccountantBlock::where('userId', $userId)->exists()) {
+            return response()->json(['message' => 'Accountant is already assigned to a course']);
+        } else {
+            $data->delete();
+        }
         return response()->json('User Deleted Sucessfully');
     }
 
@@ -255,7 +263,7 @@ class UserController extends Controller
             $studentBatch->save();
         }
 
-        if($request->blockId) {
+        if ($request->blockId) {
             $AccountantBlock = AccountantBlock::where('userId', $userId)->first();
             if ($AccountantBlock) {
                 $AccountantBlock->blockId = $request->blockId;
@@ -274,11 +282,11 @@ class UserController extends Controller
     public function updateProfile(Request $request)
     {
         $userdata = auth()->user();
-        
+
         if (!$userdata) {
             return response()->json(['message' => 'User not found'], 404);
         }
-    
+
         $request->validate([
             'name' => 'required|string',
             'email' => 'required|email',
@@ -286,26 +294,26 @@ class UserController extends Controller
             'gender' => 'required|string',
             'profileimg' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-    
+
         $userdata->name = $request->name;
         $userdata->email = $request->email;
         $userdata->phoneNo = $request->phoneNo;
         $userdata->gender = $request->gender;
-    
+
         if ($request->hasFile('profileimg')) {
             if ($userdata->profileimg && file_exists(public_path($userdata->profileimg))) {
                 unlink(public_path($userdata->profileimg));
             }
-    
+
             $file = $request->file('profileimg');
             $imageName = time() . '.' . $file->extension();
             $file->move(public_path('profileImage'), $imageName);
-    
+
             $userdata->profileimg = 'profileImage/' . $imageName;
         }
-    
+
         $userdata->update();
-    
+
         $response = (object)[
             'userId' => $userdata->userId,
             'name' => $userdata->name,
@@ -319,44 +327,43 @@ class UserController extends Controller
             'temporaryAddress' => $userdata->temporaryAddress,
             'emergencyContactNo' => $userdata->emergencyContactNo,
             'parents_name' => $userdata->parents_name,
-    
+
             'block' => $userdata->accountantBlock->first() ? [
                 'blockId' => $userdata->accountantBlock->first()->blockId,
                 'name' => $userdata->accountantBlock->first()->block->name ?? 'N/A',
             ] : null,
         ];
-    
+
         return response()->json($response);
-    
     }
 
     public function changePassword(Request $request)
-        {
-            $userdata = auth()->user();
+    {
+        $userdata = auth()->user();
 
-            if (!$userdata) {
-                return response()->json(['message' => 'User not found'], 404);
-            }
-
-            $request->validate([
-                'oldPassword' => 'required|string',
-                'password' => 'required|string|min:8',
-                'confirmPassword' => 'required|string|min:8',
-            ]);
-
-            if (!Hash::check($request->oldPassword, $userdata->password)) {
-                return response()->json(['message' => 'Old password is incorrect'], 422);
-            }
-
-            if($request->password !== $request->confirmPassword) {
-                return response()->json(['message' => 'New password and confirm password does not match.'], 422);
-            }
-
-            $userdata->password = Hash::make($request->password);
-            $userdata->update();
-
-            return response()->json(['message' => 'Password changed successfully']);
+        if (!$userdata) {
+            return response()->json(['message' => 'User not found'], 404);
         }
+
+        $request->validate([
+            'oldPassword' => 'required|string',
+            'password' => 'required|string|min:8',
+            'confirmPassword' => 'required|string|min:8',
+        ]);
+
+        if (!Hash::check($request->oldPassword, $userdata->password)) {
+            return response()->json(['message' => 'Old password is incorrect'], 422);
+        }
+
+        if ($request->password !== $request->confirmPassword) {
+            return response()->json(['message' => 'New password and confirm password does not match.'], 422);
+        }
+
+        $userdata->password = Hash::make($request->password);
+        $userdata->update();
+
+        return response()->json(['message' => 'Password changed successfully']);
+    }
 }
 
 

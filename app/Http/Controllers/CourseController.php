@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BatchCourse;
 use App\Models\Course;
 use App\Models\MentorCourse;
 use App\Models\User;
@@ -86,16 +87,13 @@ class CourseController extends Controller
         $mentorCourse->userId = $request->input('mentorId');
         $mentorCourse->courseId = $course->courseId;
         $mentorCourse->save();
-
-
         return response()->json('Course Inserted Sucessfully');
     }
 
     public function deleteCourse($courseId)
     {
         $course = Course::find($courseId);
-        // Check if any users are assigned to the course through StudentCourse
-        if ($course->users()->count() > 0) {
+        if (BatchCourse::where('courseId', $courseId)->exists()) {
             return response()->json(['error' => 'Cannot delete course. It is assigned to one or more users.'], 400);
         }
         $course->delete();
