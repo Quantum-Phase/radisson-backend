@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('course_fees', function (Blueprint $table) {
+        Schema::create('daily_transactions', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignId('courseId');
-            $table->foreignId('feeId');
+            $table->integer('opening_balance');
+            $table->integer('total_deposits');
+            $table->integer('total_withdrawals');
+            $table->integer('closing_balance');
         });
     }
 
@@ -24,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('course_fees');
+        Schema::dropIfExists('daily_transactions');
     }
 };

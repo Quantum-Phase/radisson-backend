@@ -129,6 +129,7 @@ class UserController extends Controller
             $insertUser->student_code = $studentCode;
             // $insertUser->time = $request->time;
             $insertUser->save();
+            // dd($request->batchId);
 
             $studentBatch = new StudentBatch;
             $studentBatch->batchId = $request->batchId;
@@ -137,6 +138,7 @@ class UserController extends Controller
 
             $batch = Batch::find($request->batchId);
             $course = $batch->course()->first();
+
 
             $userFeeDetail = new UserFeeDetail();
             $userFeeDetail->userId = $insertUser->userId;

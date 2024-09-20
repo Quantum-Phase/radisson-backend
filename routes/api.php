@@ -7,6 +7,8 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\FeeController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\BlockController;
+use App\Http\Controllers\DailyTransaction;
+use App\Http\Controllers\DailyTransactionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserFeeDetailController;
 use App\Models\StudentWork;
@@ -69,12 +71,12 @@ Route::group([
 
 
     //Route Fee
-    Route::get('/fee', [FeeController::class, 'showFee'])->name("ShowFee");
-    Route::post('/fee', [FeeController::class, 'insertFee'])->name('InsertFee');
-    Route::delete('/fee/{feeId}', [FeeController::class, 'deleteFee'])->name('DeleteFee');
-    Route::get('/fee/{feeId}', [FeeController::class, 'updatef'])->name('updateFee');
-    Route::put('/fee/{feeId}', [FeeController::class, 'updateFee'])->name('UpdateFee');
-    Route::get('/searchfee', [FeeController::class, 'searchFee'])->name('SearchFee');
+    // Route::get('/fee', [FeeController::class, 'showFee'])->name("ShowFee");
+    // Route::post('/fee', [FeeController::class, 'insertFee'])->name('InsertFee');
+    // Route::delete('/fee/{feeId}', [FeeController::class, 'deleteFee'])->name('DeleteFee');
+    // Route::get('/fee/{feeId}', [FeeController::class, 'updatef'])->name('updateFee');
+    // Route::put('/fee/{feeId}', [FeeController::class, 'updateFee'])->name('UpdateFee');
+    // Route::get('/searchfee', [FeeController::class, 'searchFee'])->name('SearchFee');
 
 
     //Route Batch
@@ -92,7 +94,10 @@ Route::group([
     //Route User Fee Detail
     Route::get('/user-fee-detail/{userId}', [UserFeeDetailController::class, 'show'])->name("show");
 
-     //Route Payment
-     Route::get('/payment', [PaymentController::class, 'index'])->name("index");
-     Route::post('/payment', [PaymentController::class, 'create'])->name("create");
+    //Route Payment
+    Route::get('/payment', [PaymentController::class, 'index'])->name("index");
+    Route::post('/payment', [PaymentController::class, 'create'])->name("create");
+
+    //Route Daily Transaction
+    Route::get('/transaction', [DailyTransactionController::class, 'showTransaction'])->name('showTransaction');
 });
