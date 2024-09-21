@@ -29,6 +29,7 @@ class PaymentController extends Controller
                 'course_name' => Course::select('name')->whereColumn('courseId', 'payments.courseId')->limit(1),
                 'payment_received_by' => User::select('name')->whereColumn('userId', 'payments.received_by')->limit(1),
                 'block_name' => Block::select('name')->whereColumn('blockId', 'payments.blockId')->limit(1),
+                'mobile_number' => User::select('phoneNo')->whereColumn('userId', 'payments.payed_by')->limit(1),
                 'payed_by' // Including payed_by explicitly in the select
             ])
             ->where(function ($query) use ($search) {
