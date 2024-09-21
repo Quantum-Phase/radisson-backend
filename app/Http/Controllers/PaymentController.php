@@ -26,6 +26,7 @@ class PaymentController extends Controller
         ->leftJoin('users as received_by_users', 'payments.received_by', '=', 'received_by_users.userId')
         ->addSelect([
             'paid_by' => User::select('name')->whereColumn('userId', 'payments.payed_by')->limit(1),
+            'payer_mobile_number' => User::select('phoneNo')->whereColumn('userId', 'payments.payed_by')->limit(1),
             'course_name' => Course::select('name')->whereColumn('courseId', 'payments.courseId')->limit(1),
             'payment_received_by' => User::select('name')->whereColumn('userId', 'payments.received_by')->limit(1),
             'block_name' => Block::select('name')->whereColumn('blockId', 'payments.blockId')->limit(1),
@@ -62,6 +63,15 @@ class PaymentController extends Controller
             'blockId' => 'required|exists:blocks,blockId'
         ]);
         $user = auth()->user();
+        $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->first();
+
+        if (!$userFeeDetail) {
+            return response()->json(['message' => 'User Fee detail not found'], 404);
+        }
+
+        if ($userFeeDetail->remainingAmount < $request->amount) {
+            return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 404);
+        }
 
         $payment = new Payment();
         $payment->amount = $request->amount;
@@ -74,19 +84,15 @@ class PaymentController extends Controller
         $payment->type = $request->type;
         $payment->received_by = $user->userId;
 
-        $payment->save();
-        if ($request->type === 'credit' && $request->payed_by) {
-            $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->first();
-
-            if (!$userFeeDetail) {
-                return response()->json(['message' => 'User Fee detail not found'], 404);
-            }
-
-            if ($userFeeDetail->remainingAmount < $request->amount) {
-                return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 404);
-            }
-
+        if ($request->type === 'credit' && $request->payed_by) {           
             $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
+            $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
+
+            $payment->due_amount = $userFeeDetail->amountToBePaid -  $userFeeDetail->totalAmountPaid;
+        }
+
+        $payment->save();
+        if ($request->type === 'credit' && $request->payed_by) {           
             $userFeeDetail->update();
         }
         return response()->json('Payment inserted successfully');

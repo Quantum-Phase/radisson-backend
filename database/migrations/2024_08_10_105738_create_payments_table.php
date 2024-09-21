@@ -26,6 +26,7 @@ return new class extends Migration
             // $table->foreign('recieved_by')->references('userId')->on('users')->onDelete('cascade');
             $table->foreignId('payed_by')->nullable();
             $table->foreignId('received_by');
+            $table->integer('due_amount')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
