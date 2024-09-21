@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('remarks')->nullable();
             // $table->unsignedBigInteger('recieved_by');
             // $table->foreign('recieved_by')->references('userId')->on('users')->onDelete('cascade');
-            $table->foreignId('payed_by');
+            $table->foreignId('payed_by')->nullable();
             $table->foreignId('received_by');
             $table->timestamps();
             $table->softDeletes();

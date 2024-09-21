@@ -51,6 +51,15 @@ class ApiController extends Controller
 
         if (!empty($token)) {
             $user_details = Auth::user();
+
+            if($user_details->role === "mentor") {
+                return response()->json([
+                    "status" => false,
+                    "message" => "Unauthorized Access."
+                ], 401);
+            }
+
+            $user_details->block = $user_details->block;
             return response()->json([
                 "status" => true,
                 "message" => "User logged in succcessfully",
@@ -69,6 +78,7 @@ class ApiController extends Controller
     {
 
         $userdata = auth()->user();
+        $userdata->block = $userdata->block;
 
         return response()->json([
             "status" => true,

@@ -21,19 +21,21 @@ class PaymentController extends Controller
         $search = $request->search;
 
         $payments = Payment::select('payments.*')
-            ->join('users', 'payments.payed_by', '=', 'users.userId')
-            ->join('courses', 'payments.courseId', '=', 'courses.courseId')
-            // Adding user name and course name as part of the select
-            ->addSelect([
-                'paid_by' => User::select('name')->whereColumn('userId', 'payments.payed_by')->limit(1),
-                'course_name' => Course::select('name')->whereColumn('courseId', 'payments.courseId')->limit(1),
-                'payment_received_by' => User::select('name')->whereColumn('userId', 'payments.received_by')->limit(1),
-                'block_name' => Block::select('name')->whereColumn('blockId', 'payments.blockId')->limit(1),
-                'payed_by' // Including payed_by explicitly in the select
-            ])
-            ->where(function ($query) use ($search) {
-                $query->where('users.name', 'like', '%' . $search . '%')
-                    ->orWhere('courses.name', 'like', '%' . $search . '%');
+        ->leftJoin('users', 'payments.payed_by', '=', 'users.userId')
+        ->leftJoin('courses', 'payments.courseId', '=', 'courses.courseId')
+        ->leftJoin('users as received_by_users', 'payments.received_by', '=', 'received_by_users.userId')
+        ->addSelect([
+            'paid_by' => User::select('name')->whereColumn('userId', 'payments.payed_by')->limit(1),
+            'course_name' => Course::select('name')->whereColumn('courseId', 'payments.courseId')->limit(1),
+            'payment_received_by' => User::select('name')->whereColumn('userId', 'payments.received_by')->limit(1),
+            'block_name' => Block::select('name')->whereColumn('blockId', 'payments.blockId')->limit(1),
+            'payed_by' // Including payed_by explicitly in the select
+        ])
+        ->where(function ($query) use ($search) {
+            $query->where('payments.name', 'like', '%' . $search . '%')
+                ->orWhere('users.name', 'like', '%' . $search . '%')
+                ->orWhere('courses.name', 'like', '%' . $search . '%')
+                ->orWhere('received_by_users.name', 'like', '%' . $search . '%');
             });
 
         // Paginate if limit is provided, else get all
@@ -54,26 +56,26 @@ class PaymentController extends Controller
     {
         $request->validate([
             'amount' => 'required',
-            'payed_by' => 'required|exists:users,userId',
-            'courseId' => 'required|exists:courses,courseId',
             'payment_mode' => 'required|string',
-            // 'recieved_by' => 'required|exists:users,userId',
+            'name' => 'required|string',
+            'type' => 'required|string',
             'blockId' => 'required|exists:blocks,blockId'
         ]);
-        // dd($request->received_by);
+        $user = auth()->user();
+
         $payment = new Payment();
         $payment->amount = $request->amount;
         $payment->payed_by = $request->payed_by;
         $payment->courseId = $request->courseId;
         $payment->payment_mode = $request->payment_mode;
-        $payment->received_by = $request->received_by;
         $payment->blockId = $request->blockId;
         $payment->remarks = $request->remarks;
         $payment->name = $request->name;
         $payment->type = $request->type;
+        $payment->received_by = $user->userId;
 
         $payment->save();
-        if ($request->type == 'credit' && $request->payed_by) {
+        if ($request->type === 'credit' && $request->payed_by) {
             $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->first();
 
             if (!$userFeeDetail) {
@@ -88,37 +90,5 @@ class PaymentController extends Controller
             $userFeeDetail->update();
         }
         return response()->json('Payment inserted successfully');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 }
