@@ -44,6 +44,7 @@ class CourseController extends Controller
             'courses.duration'
         )
             ->with('mentorCourses.user') // Eager load mentorCourses and user relationships
+            ->orderBy('created_at', 'desc')
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'like', "%$search%");
             });

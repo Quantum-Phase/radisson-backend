@@ -4,16 +4,12 @@ use App\Http\Controllers\ApiController;
 use App\Http\Controllers\BatchController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseController;
-use App\Http\Controllers\FeeController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\BlockController;
-use App\Http\Controllers\DailyTransaction;
 use App\Http\Controllers\DailyTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserFeeDetailController;
-use App\Models\StudentWork;
-use App\Models\Work;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +30,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post('/register', [ApiController::class, 'register'])->name('register');
 Route::post('/login', [ApiController::class, 'login'])->name('login');
+Route::post('/forgot-password', [ApiController::class, 'forgotPassword'])->name('forgotPassword');
+Route::post('/reset-password', [ApiController::class, 'resetPassword'])->name('resetPassword');
+
 
 Route::group([
     "middleware" => ['auth:api']

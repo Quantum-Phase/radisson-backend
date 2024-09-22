@@ -43,6 +43,7 @@ class BatchController extends Controller
             'batches.courseId',
         )
             ->with('course')
+            ->orderBy('created_at', 'desc')
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'like', "%$search%");
             });

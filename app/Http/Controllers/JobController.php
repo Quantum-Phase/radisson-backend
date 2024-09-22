@@ -7,6 +7,7 @@ use App\Models\Work;
 use Illuminate\Support\Carbon;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class JobController extends Controller
 {
@@ -40,6 +41,7 @@ class JobController extends Controller
             'paid_amount'
         )
             ->with(['studentWork.user'])
+            ->orderBy('created_at', 'desc')
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'like', "%$search%");
             });
@@ -70,6 +72,15 @@ class JobController extends Controller
         // $dateString = $request->start_date;
         // $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
         // $formattedDate = $date->format('Y-m-d H:i:s');
+
+        $messages = [
+            'studentId.unique' => 'The student has already been assigned with job/internship.',
+        ];
+
+        $request->validate([
+            'studentId' => Rule::unique('student_works', 'userId')->whereNull('deleted_at'),
+        ], $messages);
+        
         $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d');
 
         $insertJob = new Work();
