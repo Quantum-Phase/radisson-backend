@@ -19,6 +19,7 @@ class DailyTransactionController extends Controller
         $today = now()->startOfDay();
 
         // Initialize totals
+        $openingBalance = 0;
         $totalCredit = 0;
         $totalDebit = 0;
         $result = [];
@@ -81,6 +82,7 @@ class DailyTransactionController extends Controller
 
         // Return results or pass them to a view
         return response()->json([
+            'openingBalance' => $openingBalance,
             'totalCredit' => $totalCredit,
             'totalDebit' => $totalDebit,
             'data' => $finalResult,
