@@ -19,9 +19,10 @@ class DailyTransactionController extends Controller
         $totalDebit = 0;
         $creditGroup = [];
         $debitGroup = [];
+        $date = now();
 
         // Fetch all payments
-        $payments = Payment::all();
+        $payments = Payment::whereDate('created_at', $date->format('Y-m-d'))->get();
 
         // Process payments and group by type
         foreach ($payments as $payment) {
@@ -45,6 +46,7 @@ class DailyTransactionController extends Controller
                 DB::raw('SUM(payments.amount) as totalAmount')
             )
             ->where('payments.type', 'credit') // Filter for credits
+            ->where(DB::raw("DATE(payments.created_at)"), '=', $date->format('Y-m-d'))
             ->groupBy('payments.blockId', 'blocks.name')
             ->get()
             ->map(function ($item) {
@@ -53,8 +55,9 @@ class DailyTransactionController extends Controller
                     'blockName' => $item->blockName,
                     'totalAmount' => $item->totalAmount,
                     'paymentData' => DB::table('payments')
-                        ->select('paymentId', 'name', 'type', 'amount')
+                        ->select('paymentId', 'name', 'type', 'amount', 'created_at')
                         ->where('blockId', $item->blockId)
+                        ->where(DB::raw("DATE(payments.created_at)"), '=', now()->format('Y-m-d'))
                         ->where('type', 'credit') // Get credit payment data for this block
                         ->get(),
                 ];
@@ -69,6 +72,7 @@ class DailyTransactionController extends Controller
                 DB::raw('SUM(payments.amount) as totalAmount')
             )
             ->where('payments.type', 'debit') // Filter for debits
+            ->where(DB::raw("DATE(payments.created_at)"), '=', $date->format('Y-m-d'))
             ->groupBy('payments.blockId', 'blocks.name')
             ->get()
             ->map(function ($item) {
@@ -77,8 +81,9 @@ class DailyTransactionController extends Controller
                     'blockName' => $item->blockName,
                     'totalAmount' => $item->totalAmount,
                     'paymentData' => DB::table('payments')
-                        ->select('paymentId', 'name', 'type', 'amount')
+                        ->select('paymentId', 'name', 'type', 'amount', 'created_at')
                         ->where('blockId', $item->blockId)
+                        ->where(DB::raw("DATE(payments.created_at)"), '=', now()->format('Y-m-d'))
                         ->where('type', 'debit') // Get debit payment data for this block
                         ->get(),
                 ];
@@ -91,6 +96,7 @@ class DailyTransactionController extends Controller
             'totalDebit' => $totalDebit,
             'creditData' => $creditQuery,
             'debitData' => $debitQuery,
+            'date' => $date
         ]);
     }
 
