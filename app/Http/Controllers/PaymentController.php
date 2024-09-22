@@ -33,6 +33,7 @@ class PaymentController extends Controller
                 'block_name' => Block::select('name')->whereColumn('blockId', 'payments.blockId')->limit(1),
                 'payed_by' // Including payed_by explicitly in the select
             ])
+            ->orderBy('created_at', 'desc')
             ->when($payed_by, function ($query) use ($payed_by) {
                 $query->where('payments.payed_by', $payed_by);
             })
