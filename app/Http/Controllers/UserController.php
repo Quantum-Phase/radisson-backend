@@ -57,6 +57,7 @@ class UserController extends Controller
             'users.parents_name',
             'student_batches.batchId',
             'batches.name AS batchname',
+            'users.created_at'
             // 'accountant_blocks.blockId',
             // 'blocks.name AS blockname',
         )
@@ -64,6 +65,7 @@ class UserController extends Controller
             ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
             // ->leftJoin('accountant_blocks', 'users.userId', '=', 'accountant_blocks.userId')
             // ->leftJoin('blocks', 'accountant_blocks.blockId', '=', 'blocks.blockId')
+            ->orderBy('created_at', 'desc')
             ->when($roles, function ($query, $roles) {
                 return $query->whereIn('users.role', $roles);
             })
@@ -208,6 +210,7 @@ class UserController extends Controller
 
         $response = (object)[
             'userId' => $data->userId,
+            'student_code' => $data->student_code,
             'name' => $data->name,
             'email' => $data->email,
             'phoneNo' => $data->phoneNo,

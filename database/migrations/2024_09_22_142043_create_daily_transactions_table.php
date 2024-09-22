@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('payments', function (Blueprint $table) {
-            $table->integer('due_amount')->nullable()->default(0);
+        Schema::create('daily_transactions', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->integer('opening_balance');
+            $table->integer('total_credit');
+            $table->integer('total_debit');
         });
     }
 
@@ -21,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('daily_transactions');
     }
 };
