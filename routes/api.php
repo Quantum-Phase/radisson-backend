@@ -69,7 +69,6 @@ Route::group([
     Route::put('/job/{workId}', [JobController::class, 'updateJob'])->name('UpdateJob');
     Route::get('/searchjob', [JobController::class, 'searchJob'])->name('SearchJob');
 
-
     //Route Fee
     // Route::get('/fee', [FeeController::class, 'showFee'])->name("ShowFee");
     // Route::post('/fee', [FeeController::class, 'insertFee'])->name('InsertFee');

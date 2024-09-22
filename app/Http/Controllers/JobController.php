@@ -64,7 +64,7 @@ class JobController extends Controller
 
         return response()->json($job);
     }
-    
+
     public function insertJob(Request $request)
     {
         // $dateString = $request->start_date;

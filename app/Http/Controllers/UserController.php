@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Batch;
+use App\Models\Payment;
 use App\Models\StudentBatch;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -89,8 +90,8 @@ class UserController extends Controller
             'profileimg' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'start_date' => 'date_format:Y-m-d',
             'date' => 'date_format:Y-m-d',
-            'email' => 'unique:users,email,NULL,deleted_at',
-            'phoneNo' => 'unique:users,phoneNo,NULL,deleted_at',
+            'email' => Rule::unique('users', 'email')->whereNull('deleted_at'),
+            'phoneNo' => Rule::unique('users', 'phoneNo')->whereNull('deleted_at'),
         ]);
 
         $file = $request->file('profileimg');
@@ -158,6 +159,13 @@ class UserController extends Controller
             return response()->json('User not found', 404);
         }
 
+        if ($user->role !== "student") {
+            $payment = Payment::where('received_by', $userId)->first();
+            if ($payment) {
+                return response()->json(['message' => 'Cannot delete user'], 422);
+            }
+        }
+
         if ($user->hasRole('mentor')) {
             $mentorCourses = $user->mentorCourses;
             if ($mentorCourses->count() > 0) {
@@ -170,6 +178,12 @@ class UserController extends Controller
             if ($studentWork->count() > 0) {
                 return response()->json(['message' => 'Cannot delete student, they are assigned to internship/job'], 422);
             }
+
+            $payment = Payment::where('payed_by', $userId)->first();
+
+            if ($payment) {
+                return response()->json(['message' => 'Cannot delete student, as they have made an payment.'], 422);
+            }
         }
 
         $data = User::find($userId);
@@ -177,7 +191,8 @@ class UserController extends Controller
         $data->save();
 
         if ($user->hasRole('student')) {
-            StudentBatch::where('userId', $userId)->delete(); // Add this line
+            StudentBatch::where('userId', $userId)->delete();
+            UserFeeDetail::where('userId', $userId)->delete();
         }
 
         return response()->json('User Deleted Sucessfully');
@@ -221,6 +236,13 @@ class UserController extends Controller
                 'type' => $data->studentWork->first()->work ? $data->studentWork->first()->work->type ?? 'N/A' : null,
                 'start_date' => $data->studentWork->first()->work ? $data->studentWork->first()->work->start_date ?? 'N/A' : null,
                 'paid_amount' => $data->studentWork->first()->work ? $data->studentWork->first()->work->paid_amount ?? 'N/A' : null,
+            ] : null,
+
+            'userFeeDetail' => $data->userFeeDetail->first() ? [
+                'userFeeDetailId' => $data->userFeeDetail->first() ? $data->userFeeDetail->first()->userFeeDetailId : null,
+                'amountToBePaid' => $data->userFeeDetail->first() ? $data->userFeeDetail->first()->amountToBePaid : null,
+                'totalAmountPaid' => $data->userFeeDetail->first() ? $data->userFeeDetail->first()->totalAmountPaid : null,
+                'remainingAmount' => $data->userFeeDetail->first() ? $data->userFeeDetail->first()->remainingAmount : null,
             ] : null,
         ];
 
