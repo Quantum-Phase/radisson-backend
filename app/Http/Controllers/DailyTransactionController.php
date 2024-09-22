@@ -25,7 +25,10 @@ class DailyTransactionController extends Controller
         $result = [];
 
         // Fetch payments made today
-        $payments = Payment::whereDate('created_at', '=', $today)->get(['paymentId', 'name', 'type', 'amount', 'blockId']); // Select only the required fields
+        $payments = Payment::whereDate('created_at', '=', $today)
+        ->orderBy('blockId', 'asc')
+        ->orderBy('created_at', 'desc')
+        ->get(['paymentId', 'name', 'type', 'amount', 'blockId']); // Select only the required fields
 
         // Process payments and group by block name and type
         foreach ($payments as $payment) {
