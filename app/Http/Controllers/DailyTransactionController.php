@@ -88,12 +88,4 @@ class DailyTransactionController extends Controller
             'data' => $finalResult,
         ]);
     }
-
-
-
-
-    public function insertTransaction(Request $request)
-    {
-        // $insertTransaction= new ;
-    }
 }

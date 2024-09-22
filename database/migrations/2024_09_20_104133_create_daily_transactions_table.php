@@ -17,7 +17,7 @@ return new class extends Migration
             $table->integer('opening_balance');
             $table->integer('total_credit');
             $table->integer('total_debit');
-            $table->integer('closing_balance');
+            // $table->integer('closing_balance');
         });
     }
 
