@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->integer('opening_balance');
-            $table->integer('total_deposits');
-            $table->integer('total_withdrawals');
+            $table->integer('total_credit');
+            $table->integer('total_debit');
             $table->integer('closing_balance');
         });
     }
