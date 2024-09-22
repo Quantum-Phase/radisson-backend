@@ -52,7 +52,7 @@ class ApiController extends Controller
         if (!empty($token)) {
             $user_details = Auth::user();
 
-            if($user_details->role === "mentor") {
+            if($user_details->role === "mentor" || $user_details->role === "student") {
                 return response()->json([
                     "status" => false,
                     "message" => "Unauthorized Access."
