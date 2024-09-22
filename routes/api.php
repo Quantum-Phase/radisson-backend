@@ -9,6 +9,7 @@ use App\Http\Controllers\JobController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\DailyTransaction;
 use App\Http\Controllers\DailyTransactionController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserFeeDetailController;
 use App\Models\StudentWork;
@@ -41,7 +42,8 @@ Route::group([
     Route::get('/refresh', [ApiController::class, 'refreshToken'])->name('refresh');
     Route::get('/logout', [ApiController::class, 'logout'])->name('logout');
 
-
+    //Routes for Dashboard
+    Route::get('/dashboard/analytics', [DashboardController::class, 'getDashboardAnalytics'])->name('getDashboardAnalytics');
 
     //Route for Users
     Route::get('/user', [UserController::class, 'showUser'])->name('showUser');
