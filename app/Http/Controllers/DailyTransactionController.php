@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Block;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 
 
 
@@ -13,87 +15,83 @@ class DailyTransactionController extends Controller
 {
     public function showTransaction(Request $request)
     {
-        // Initialize totals and groups
-        $openingBalance = 0;
+        // Get today's date
+        $today = now()->startOfDay();
+
+        // Initialize totals
         $totalCredit = 0;
         $totalDebit = 0;
-        $creditGroup = [];
-        $debitGroup = [];
+        $result = [];
 
-        // Fetch all payments
-        $payments = Payment::all();
+        // Fetch payments made today
+        $payments = Payment::whereDate('created_at', '=', $today)->get(['paymentId', 'name', 'type', 'amount', 'blockId']); // Select only the required fields
 
-        // Process payments and group by type
+        // Process payments and group by block name and type
         foreach ($payments as $payment) {
-            if (isset($payment->type)) {
-                if ($payment->type == 'credit') {
-                    $totalCredit += $payment->amount;
-                    $creditGroup[] = $payment;
-                } elseif ($payment->type == 'debit') {
-                    $totalDebit += $payment->amount;
-                    $debitGroup[] = $payment;
-                }
+            // Ensure block name is fetched
+            $blockName = Block::find($payment->blockId)->name ?? 'Unknown Block'; // Handle if block is not found
+
+            if (!isset($result[$payment->blockId])) {
+                $result[$payment->blockId] = [
+                    'blockName' => $blockName,
+                    'credit' => [],
+                    'debit' => [],
+                    'totalCredit' => 0,
+                    'totalDebit' => 0,
+                ];
+            }
+
+            if ($payment->type == 'credit') {
+                $totalCredit += $payment->amount;
+                $result[$payment->blockId]['credit'][] = [
+                    'paymentId' => $payment->paymentId,
+                    'name' => $payment->name,
+                    'type' => $payment->type,
+                    'amount' => $payment->amount,
+                ];
+                $result[$payment->blockId]['totalCredit'] += $payment->amount;
+            } elseif ($payment->type == 'debit') {
+                $totalDebit += $payment->amount;
+                $result[$payment->blockId]['debit'][] = [
+                    'paymentId' => $payment->paymentId,
+                    'name' => $payment->name,
+                    'type' => $payment->type,
+                    'amount' => $payment->amount,
+                ];
+                $result[$payment->blockId]['totalDebit'] += $payment->amount;
             }
         }
 
-        // Fetch grouped credit data from the database
-        $creditQuery = DB::table('payments')
-            ->join('blocks', 'payments.blockId', '=', 'blocks.blockId')
-            ->select(
-                'payments.blockId',
-                'blocks.name as blockName',
-                DB::raw('SUM(payments.amount) as totalAmount')
-            )
-            ->where('payments.type', 'credit') // Filter for credits
-            ->groupBy('payments.blockId', 'blocks.name')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'blockId' => $item->blockId,
-                    'blockName' => $item->blockName,
-                    'totalAmount' => $item->totalAmount,
-                    'paymentData' => DB::table('payments')
-                        ->select('paymentId', 'name', 'type', 'amount')
-                        ->where('blockId', $item->blockId)
-                        ->where('type', 'credit') // Get credit payment data for this block
-                        ->get(),
-                ];
-            });
-
-        // Fetch grouped debit data from the database
-        $debitQuery = DB::table('payments')
-            ->join('blocks', 'payments.blockId', '=', 'blocks.blockId')
-            ->select(
-                'payments.blockId',
-                'blocks.name as blockName',
-                DB::raw('SUM(payments.amount) as totalAmount')
-            )
-            ->where('payments.type', 'debit') // Filter for debits
-            ->groupBy('payments.blockId', 'blocks.name')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'blockId' => $item->blockId,
-                    'blockName' => $item->blockName,
-                    'totalAmount' => $item->totalAmount,
-                    'paymentData' => DB::table('payments')
-                        ->select('paymentId', 'name', 'type', 'amount')
-                        ->where('blockId', $item->blockId)
-                        ->where('type', 'debit') // Get debit payment data for this block
-                        ->get(),
-                ];
-            });
+        // Format the final result
+        $finalResult = [];
+        foreach ($result as $blockId => $data) {
+            $finalResult[] = [
+                'blockId' => $blockId,
+                'blockName' => $data['blockName'],
+                'credit' => [
+                    'total' => $data['totalCredit'],
+                    'payments' => $data['credit'],
+                ],
+                'debit' => [
+                    'total' => $data['totalDebit'],
+                    'payments' => $data['debit'],
+                ],
+            ];
+        }
 
         // Return results or pass them to a view
         return response()->json([
-            'openingBalance' => $openingBalance,
             'totalCredit' => $totalCredit,
             'totalDebit' => $totalDebit,
-            'creditData' => $creditQuery,
-            'debitData' => $debitQuery,
+            'data' => $finalResult,
         ]);
     }
 
 
-    public function insertTransaction(Request $request) {}
+
+
+    public function insertTransaction(Request $request)
+    {
+        // $insertTransaction= new ;
+    }
 }
