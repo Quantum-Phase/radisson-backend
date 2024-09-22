@@ -17,6 +17,12 @@ class DailyTransactionController extends Controller
     {
         // Get today's date
         $today = now()->startOfDay();
+        $openingblnc = DB::table('daily_transactions')->whereDate('created_at', $today)->first();
+        if ($openingblnc) {
+            return $openingblnc->opening_balance;
+        } else {
+            return 0;
+        }
 
         // Initialize totals
         $openingBalance = 0;
@@ -86,6 +92,7 @@ class DailyTransactionController extends Controller
             'totalCredit' => $totalCredit,
             'totalDebit' => $totalDebit,
             'data' => $finalResult,
+            'date' => $today
         ]);
     }
 }
