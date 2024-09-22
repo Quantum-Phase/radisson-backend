@@ -15,20 +15,18 @@ class DailyTransactionController extends Controller
 {
     public function showTransaction(Request $request)
     {
-        // Get today's date
-        $today = now()->startOfDay();
-        $openingblnc = DB::table('daily_transactions')->whereDate('created_at', $today)->first();
-        if ($openingblnc) {
-            return $openingblnc->opening_balance;
-        } else {
-            return 0;
-        }
-
         // Initialize totals
         $openingBalance = 0;
         $totalCredit = 0;
         $totalDebit = 0;
         $result = [];
+        
+        // Get today's date
+        $today = now()->startOfDay();
+        $openingblnc = DB::table('daily_transactions')->whereDate('created_at', $today)->first();
+        if ($openingblnc) {
+            $openingBalance = $openingblnc->opening_balance;
+        }
 
         // Fetch payments made today
         $payments = Payment::whereDate('created_at', '=', $today)
