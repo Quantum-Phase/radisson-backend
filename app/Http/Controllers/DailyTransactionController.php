@@ -22,6 +22,7 @@ class DailyTransactionController extends Controller
         $totalDebit = 0;
         $result = [];
 
+        $user = auth()->user();
 
         // Get today's date
         $today = now()->startOfDay();
@@ -31,10 +32,18 @@ class DailyTransactionController extends Controller
         }
 
         // Fetch payments made today
-        $payments = Payment::whereDate('created_at', '=', $today)
-            ->orderBy('blockId', 'asc')
-            ->orderBy('created_at', 'desc')
-            ->get(['paymentId', 'name', 'type', 'amount', 'blockId']); // Select only the required fields
+        if ($user->role === 'accountant') {
+            $blockId = $user->blockId; // Assuming the block ID is stored in the user model
+            $payments = Payment::whereDate('created_at', '=', $today)
+                ->where('blockId', $blockId) // Filter by block ID
+                ->orderBy('created_at', 'desc')
+                ->get(['paymentId', 'name', 'type', 'amount', 'blockId']); // Select only the required fields
+        } else {
+            $payments = Payment::whereDate('created_at', '=', $today)
+                ->orderBy('blockId', 'asc')
+                ->orderBy('created_at', 'desc')
+                ->get(['paymentId', 'name', 'type', 'amount', 'blockId']); // Select only the required fields
+        }
 
         // Process payments and group by block name and type
         foreach ($payments as $payment) {
