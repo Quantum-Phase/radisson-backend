@@ -33,44 +33,49 @@ class UpdateOpeningBalance extends Command
      */
     public function handle()
     {
-
-
         // Initialize opening_balance and total_credit_total_debit to 0
         $initialBalance = [
             'opening_balance' => 0,
             'total_credit' => 0,
             'total_debit' => 0,
         ];
+
         // Get today's date
         $today = Carbon::today();
-        $dailyTransaction = DB::table('daily_transactions')->count();
-        if ($dailyTransaction == 0) {
-            // Insert a new row for the next day's opening balance
+
+        // Retrieve the existing daily transaction record for today
+        $payment = DailyTransaction::whereDate('created_at', $today)->first();
+
+        if (!$payment) {
+            // Insert a new row for today's opening balance since no record exists
             DB::table('daily_transactions')->insert([
                 'opening_balance' => 0,
-                'total_credit' => 0, // Store total credit separately
-                'total_debit' => 0,   // Store total debit separately
+                'total_credit' => 0,
+                'total_debit' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            // After inserting, retrieve the newly created record
+            // $payment = DailyTransaction::whereDate('created_at', $today)->first();
             return;
         }
-        // Calculate today's total debit
+        // Calculate today's total debit and credit
         $totalDebit = DB::table('payments')
             ->where('type', 'debit')
             ->whereDate('created_at', $today)
             ->sum('amount');
 
-        // Calculate today's total credit
+
         $totalCredit = DB::table('payments')
             ->where('type', 'credit')
             ->whereDate('created_at', $today)
             ->sum('amount');
 
-        $payment = DailyTransaction::whereDate('created_at', $today)->first();
-        $payment->total_credit =  $totalCredit;
-        $payment->total_debit =  $totalDebit;
-        // dd($payment);
+
+        // Update the existing or new daily transaction record
+        $payment->total_credit = $totalCredit;
+        $payment->total_debit = $totalDebit;
         $payment->update();
 
         // Insert a new row for the next day's opening balance
@@ -78,11 +83,11 @@ class UpdateOpeningBalance extends Command
             'opening_balance' => $payment->opening_balance + $totalCredit - $totalDebit,
             'total_credit' => 0, // Store total credit separately
             'total_debit' => 0,   // Store total debit separately
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at' => Carbon::tomorrow(),
+            'updated_at' => Carbon::tomorrow(),
         ]);
 
-        $this->info('Opening balance for the next day set to: ' . $totalDebit);
+        $this->info('Opening balance for the next day set to: ' . ($payment->opening_balance + $totalCredit - $totalDebit));
         $this->info('Total credit for today: ' . $totalCredit);
         $this->info('Total debit for today: ' . $totalDebit);
     }
