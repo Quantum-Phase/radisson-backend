@@ -223,6 +223,7 @@ class UserController extends Controller
             'emergencyContactNo' => $data->emergencyContactNo,
             'parents_name' => $data->parents_name,
             'block' => $data->block()->first(),
+            'created_at' => $data->created_at,
 
             'batch' => $data->studentBatch->first() ? [
                 'batchId' => $data->studentBatch->first()->batchId,
