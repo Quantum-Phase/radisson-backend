@@ -11,6 +11,7 @@ use App\Http\Controllers\DailyTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\UserFeeDetailController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -115,4 +116,10 @@ Route::group([
 
     //Route Daily Transaction
     Route::get('/transaction', [DailyTransactionController::class, 'showTransaction'])->name('showTransaction');
+
+    //Route Payment Mode
+    Route::get('/payment-mode', [PaymentModeController::class, 'getAll'])->name("getAll");
+    Route::post('/payment-mode', [PaymentModeController::class, 'createNew'])->name('createNew');
+    Route::delete('/payment-mode/{paymentModeId}', [PaymentModeController::class, 'destroy'])->name('destroy');
+    Route::put('/payment-mode/{paymentModeId}', [PaymentModeController::class, 'update'])->name('update');
 });
