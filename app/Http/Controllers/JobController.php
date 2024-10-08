@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\StudentWork;
-use App\Models\Work;
+use App\Models\Job;
 use Illuminate\Support\Carbon;
 
 use Illuminate\Http\Request;
@@ -20,7 +19,7 @@ class JobController extends Controller
                 'message' => "Query parameter is required"
             ], 400);
         } else {
-            $searchjob = Work::where('name', 'LIKE', '%' . $search . '%')
+            $searchjob = Job::where('name', 'LIKE', '%' . $search . '%')
                 ->get();
             return response()->json($searchjob);
         }
@@ -30,21 +29,44 @@ class JobController extends Controller
     {
         $limit = (int)$request->limit;
         $search = $request->search;
+        $companyId = $request->companyId;
 
-        $job = Work::select(
-            'workId',
-            'name',
+        $job = Job::select(
+            'jobId',
+            'companyId',
+            'departmentId',
+            'studentId',
             'start_date',
             'type',
             'isActive',
             'isDeleted',
             'paid_amount'
         )
-            ->with(['studentWork.user'])
-            ->orderBy('created_at', 'desc')
-            ->when($search, function ($query, $search) {
-                return $query->where('name', 'like', "%$search%");
-            });
+            ->with(['company' => function ($query) {
+                $query->select('companyId', 'name');
+            }])
+            ->with(['department' => function ($query) {
+                $query->select('departmentId', 'name');
+            }])
+            ->with(['student' => function ($query) {
+                $query->select('userId', 'name');
+            }])
+            ->when($companyId, function ($query) use ($companyId) {
+                $query->where('companyId', "=", $companyId);
+            })
+            ->where(function ($query) use ($search) {
+                $query->where('type', 'like', "%$search%")
+                    ->orWhereHas('student', function ($query) use ($search) {
+                        $query->where('name', 'like', "%$search%");
+                    })
+                    ->orWhereHas('department', function ($query) use ($search) {
+                        $query->where('name', 'like', "%$search%");
+                    })
+                    ->orWhereHas('company', function ($query) use ($search) {
+                        $query->where('name', 'like', "%$search%");
+                    });
+            })
+            ->orderBy('created_at', 'desc');
 
         if ($limit > 0) {
             $job = $job->paginate($limit);
@@ -52,96 +74,86 @@ class JobController extends Controller
             $job = $job->get();
         }
 
-        $job->transform(function ($work) {
-            $work->student = $work->studentWork->map(function ($studentWork) {
-                return [
-                    'userId' => $studentWork->user->userId,
-                    'name' => $studentWork->user->name,
-                    // Add other student fields as needed
-                ];
-            })->first(); // Get the first student object
-            unset($work->studentWork);
-            return $work;
-        });
-
         return response()->json($job);
     }
 
     public function insertJob(Request $request)
     {
-        // $dateString = $request->start_date;
-        // $date = \DateTime::createFromFormat('Y-m-d\TH:i:s.uP', $dateString);
-        // $formattedDate = $date->format('Y-m-d H:i:s');
-
-        $messages = [
-            'studentId.unique' => 'The student has already been assigned with job/internship.',
-        ];
-
         $request->validate([
-            'studentId' => Rule::unique('student_works', 'userId')->whereNull('deleted_at'),
-        ], $messages);
-        
+            'studentId' => [
+                'required',
+                Rule::unique('jobs', 'studentId')->whereNull('deleted_at'),
+            ],
+            'companyId' => 'required',
+            'departmentId' => 'required',
+            'paid_amount' => 'required',
+            'start_date' => 'required',
+            'type' => 'required'
+        ]);
+
         $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d');
 
-        $insertJob = new Work();
-        $insertJob->name = $request->name;
+        $insertJob = new Job();
+        $insertJob->studentId = $request->studentId;
+        $insertJob->companyId = $request->companyId;
+        $insertJob->departmentId = $request->departmentId;
         $insertJob->start_date = $formattedStartDate;
         $insertJob->type = $request->type;
         $insertJob->paid_amount = $request->paid_amount;
         $insertJob->save();
 
-        //Insert Student in Job
-        $StudentJob = new StudentWork;
-        $StudentJob->userId = $request->input('studentId');
-        $StudentJob->workId = $insertJob->workId;
-        $StudentJob->save();
         return response()->json('Internship/Job Inserted Sucessfully');
     }
 
     public function deleteJob(Request $request, $workId)
     {
-        $jobs = Work::find($workId);
+        $jobs = Job::find($workId);
         $jobs->deleted_at = now();
         $jobs->save();
-
-        StudentWork::where('workId', $workId)->delete(); // Add this line
 
         return response()->json('Internship/Job Deleted Sucessfully');
     }
 
-    public function updatej($workId)
+    public function getSingleJob($workId)
     {
-        $studentWork = StudentWork::with(['student.user', 'work'])
-            ->findOrFail($workId);
+        $job = Job::with([
+            'department' => function ($query) {
+                $query->select('departmentId', 'name');
+            },
+            'company' => function ($query) {
+                $query->select('companyId', 'name');
+            },
+            'student' => function ($query) {
+                $query->select('userId', 'name');
+            }
+        ])->find($workId);
 
-
-        $studentName = $studentWork->student->user->name;
-        $student = $studentWork->student;
-        $work = $studentWork->work;
-
-
-        return response()->json(['studentName' => $studentName, 'student' => $student, 'work' => $work]);
+        return response()->json($job);
     }
 
     public function updateJob(Request $request, $workId)
     {
-        $jobs = Work::find($workId);
-        $jobs->name = $request->name;
+        $request->validate([
+            'studentId' => [
+                'required',
+                Rule::unique('jobs', 'studentId')->ignore($workId, 'jobId')->whereNull('deleted_at'),
+            ],
+            'companyId' => 'required',
+            'departmentId' => 'required',
+            'paid_amount' => 'required',
+            'start_date' => 'required',
+            'type' => 'required'
+        ]);
+
+        $jobs = Job::find($workId);
+        $jobs->studentId = $request->studentId;
+        $jobs->companyId = $request->companyId;
+        $jobs->departmentId = $request->departmentId;
         $jobs->start_date = $request->start_date;
         $jobs->type = $request->type;
         $jobs->paid_amount = $request->paid_amount;
         $jobs->update();
 
-        $studentJob = StudentWork::where('workId', $workId)->first();
-        if ($studentJob) {
-            $studentJob->userId = $request->studentId;
-            $studentJob->update();
-        } else {
-            $StudentJob = new StudentWork;
-            $StudentJob->userId = $request->input('studentId');
-            $StudentJob->workId = $workId;
-            $StudentJob->save();
-        }
         return response()->json('Internship/Job Updated Sucessfully');
     }
 }

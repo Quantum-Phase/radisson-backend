@@ -8,17 +8,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Work extends Model
+class Job extends Model
 {
     use HasFactory, SoftDeletes;
     protected $fillable = [
-        'name',
+        'jobId',
+        'companyId',
+        'departmentId',
+        'studentId',
+        'paid_amount',
         'start_date',
         'type'
     ];
 
     // Specify the primary key for the model
-    protected $primaryKey = 'workId'; // Custom primary key
+    protected $primaryKey = 'jobId'; // Custom primary key
 
     // Set to true if primary key is incrementing (default behavior)
     public $incrementing = true;
@@ -26,14 +30,18 @@ class Work extends Model
     // Set to false if primary key is not an integer
     protected $keyType = 'int'; // or 'string' if using a non-integer key
 
-    public function StudentWork(): HasMany
+    public function company()
     {
-        return $this->hasMany(StudentWork::class, 'workId');
+        return $this->belongsTo(Company::class, 'companyId', 'companyId');
     }
 
-    // Define the relationship to the User model through StudentBatch
-    public function users(): HasManyThrough
+    public function department()
     {
-        return $this->hasManyThrough(User::class, StudentWork::class, 'workId', 'userId');
+        return $this->belongsTo(Department::class, 'departmentId', 'departmentId');
+    }
+
+    public function student()
+    {
+        return $this->belongsTo(User::class, 'studentId', 'userId');
     }
 }

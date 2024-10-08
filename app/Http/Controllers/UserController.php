@@ -176,8 +176,8 @@ class UserController extends Controller
         }
 
         if ($user->hasRole('student')) {
-            $studentWork = $user->studentWork;
-            if ($studentWork->count() > 0) {
+            $job = $user->job;
+            if ($job->count() > 0) {
                 return response()->json(['message' => 'Cannot delete student, they are assigned to internship/job'], 422);
             }
 
@@ -234,12 +234,19 @@ class UserController extends Controller
                 'time' => $data->studentBatch->first()->batch->time ?? null,
             ] : null,
 
-            'internshipJob' => $data->studentWork->first() ? [
-                'workId' => $data->studentWork->first()->work ? $data->studentWork->first()->work->workId : null,
-                'name' => $data->studentWork->first()->work ? $data->studentWork->first()->work->name ?? 'N/A' : null,
-                'type' => $data->studentWork->first()->work ? $data->studentWork->first()->work->type ?? 'N/A' : null,
-                'start_date' => $data->studentWork->first()->work ? $data->studentWork->first()->work->start_date ?? 'N/A' : null,
-                'paid_amount' => $data->studentWork->first()->work ? $data->studentWork->first()->work->paid_amount ?? 'N/A' : null,
+            'internshipJob' => $data->job->first() ? [
+                'jobId' =>  $data->job->first()->jobId,
+                'paid_amount' =>  $data->job->first()->paid_amount,
+                'start_date' =>  $data->job->first()->start_date,
+                'type' =>  $data->job->first()->type,
+                'company' => [
+                    'companyId' =>  $data->job->first()->company->companyId,
+                    'name' =>  $data->job->first()->company->name,
+                ],
+                'department' => [
+                    'departmentId' =>  $data->job->first()->department->departmentId,
+                    'name' =>  $data->job->first()->department->name,
+                ],
             ] : null,
 
             'userFeeDetail' => $data->userFeeDetail->first() ? [

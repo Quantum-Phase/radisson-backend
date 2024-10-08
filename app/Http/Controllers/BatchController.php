@@ -65,7 +65,7 @@ class BatchController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('batches', 'name')->whereNull('deleted_at'),
-            ],        
+            ],
             'courseId' => 'required|exists:courses,courseId',
             'start_date' => 'date_format:Y-m-d',
         ]);
@@ -108,7 +108,7 @@ class BatchController extends Controller
 
         $studentBatch = StudentBatch::where("batchId", $batchId);
 
-        if($studentBatch->count() > 0) {
+        if ($studentBatch->count() > 0) {
             $batch_data->disable_course = true;
         }
 

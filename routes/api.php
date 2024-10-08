@@ -6,8 +6,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\BlockController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DailyTransactionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserFeeDetailController;
 use Illuminate\Http\Request;
@@ -62,11 +64,24 @@ Route::group([
     Route::put('/course/{courseId}', [CourseController::class, 'updateCourse'])->name('updateCourse');
     Route::get('/searchcourse', [CourseController::class, 'searchCourse'])->name('SearchCourse');
 
+    //Route Company
+    Route::get('/company', [CompanyController::class, 'getAll'])->name('getAll');
+    Route::post('/company', [CompanyController::class, 'createNew'])->name('createNew');
+    Route::delete('/company/{companyId}', [CompanyController::class, 'destroy'])->name('destroy');
+    Route::get('/company/{companyId}', [CompanyController::class, 'getSingle'])->name('getSingle');
+    Route::put('/company/{companyId}', [CompanyController::class, 'update'])->name('update');
+
+    //Route Department
+    Route::get('/department', [DepartmentController::class, 'getAll'])->name('getAll');
+    Route::post('/department', [DepartmentController::class, 'createNew'])->name('createNew');
+    Route::delete('/department/{companyId}', [DepartmentController::class, 'destroy'])->name('destroy');
+    Route::put('/department/{companyId}', [DepartmentController::class, 'update'])->name('update');
+
     //Route Internship
     Route::get('/job', [JobController::class, 'showJob'])->name('ShowJob');
     Route::post('/job', [JobController::class, 'insertJob'])->name('InsertJob');
     Route::delete('/job/{workId}', [JobController::class, 'deleteJob'])->name('DeleteJob');
-    Route::get('/job/{workId}', [CourseController::class, 'updatej'])->name('updatej');
+    Route::get('/job/{workId}', [JobController::class, 'getSingleJob'])->name('getSingleJob');
     Route::put('/job/{workId}', [JobController::class, 'updateJob'])->name('UpdateJob');
     Route::get('/searchjob', [JobController::class, 'searchJob'])->name('SearchJob');
 
