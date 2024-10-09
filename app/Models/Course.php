@@ -28,9 +28,9 @@ class Course extends Model
     // Set to false if primary key is not an integer
     protected $keyType = 'int'; // or 'string' if using a non-integer key
 
-    public function mentorCourses(): HasMany
-    {
-        return $this->hasMany(MentorCourse::class, 'courseId');
-    }
+    // public function mentorCourses(): HasMany
+    // {
+    //     return $this->hasMany(MentorCourse::class, 'courseId');
+    // }
 
 }

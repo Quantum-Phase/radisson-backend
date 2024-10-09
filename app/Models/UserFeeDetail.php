@@ -4,14 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UserFeeDetail extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'userId',
-        'courseId',
+        'batchId',
         'amountToBePaid',
         'totalAmountPaid',
         'remainingAmount'
@@ -32,8 +33,8 @@ class UserFeeDetail extends Model
         return $this->belongsTo(User::class, 'userId');
     }
 
-    public function course()
+    public function batch()
     {
-        return $this->belongsTo(Course::class, 'courseId');
+        return $this->belongsTo(Batch::class, 'batchId');
     }
 }

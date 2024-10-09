@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Batch;
 use App\Models\Course;
 use App\Models\StudentBatch;
+use App\Models\UserFeeDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
@@ -31,6 +32,7 @@ class BatchController extends Controller
     {
         $limit = (int)$request->limit;
         $search = $request->search;
+        $studentId = $request->studentId;
 
         $batch_data = Batch::select(
             'batches.batchId',
@@ -41,11 +43,19 @@ class BatchController extends Controller
             'batches.start_date',
             'batches.end_date',
             'batches.courseId',
+            'batches.mentorId',
         )
             ->with('course')
+            ->with(['mentor' => function ($query) {
+                $query->select('userId', 'name');
+            }])
             ->orderBy('created_at', 'desc')
             ->when($search, function ($query, $search) {
                 return $query->where('name', 'like', "%$search%");
+            })->when($studentId, function ($query, $studentId) {
+                $query->whereHas('studentBatches', function ($query) use ($studentId) {
+                    $query->where('userId', $studentId);
+                });
             });
 
         if ($request->has('limit')) {
@@ -78,6 +88,7 @@ class BatchController extends Controller
         $batch->start_date = $formattedStartDate;
         $batch->time = $request->time;
         $batch->courseId = $request->courseId;
+        $batch->mentorId = $request->mentorId;
 
         if ($course->duration_unit == 'months') {
             $batch->end_date = Carbon::parse($request->start_date)->addMonths($course->duration)->format('Y-m-d');
@@ -93,7 +104,7 @@ class BatchController extends Controller
     public function deleteBatch($batchId)
     {
         $batch = Batch::find($batchId);
-        if ($batch->students()->count() > 0) {
+        if ($batch->studentBatches()->count() > 0) {
             return response()->json(['message' => 'Cannot delete batch. It is assigned to one or more users.'], 400);
         }
         $batch->deleted_at = now();
@@ -103,8 +114,14 @@ class BatchController extends Controller
 
     public function singleBatch($batchId)
     {
-        $batch_data = Batch::find($batchId);
-        $batch_data->course = $batch_data->course()->first();
+        $batch_data = Batch::with([
+            'course' => function ($query) {
+                $query->select('courseId', 'name');
+            },
+            'mentor' => function ($query) {
+                $query->select('userId', 'name');
+            }
+        ])->find($batchId);
 
         $studentBatch = StudentBatch::where("batchId", $batchId);
 
@@ -135,6 +152,7 @@ class BatchController extends Controller
         $batch->start_date = $formattedStartDate;
         $batch->time = $request->time;
         $batch->courseId = $request->courseId;
+        $batch->mentorId = $request->mentorId;
 
         if ($course->duration_unit == 'months') {
             $batch->end_date = Carbon::parse($request->start_date)->addMonths($course->duration)->format('Y-m-d');
@@ -156,7 +174,8 @@ class BatchController extends Controller
             ->when($search, function ($query) use ($search) {
                 $query->whereHas('user', function ($subquery) use ($search) {
                     $subquery->where('name', 'like', "%$search%")
-                        ->orWhere('email', 'like', "%$search%");
+                        ->orWhere('email', 'like', "%$search%")
+                        ->orWhere('phoneNo', 'like', "%$search%");
                 });
             });
 
@@ -178,5 +197,59 @@ class BatchController extends Controller
         });
 
         return response()->json($students);
+    }
+
+    public function addStudentToBatch(Request $request)
+    {
+        $request->validate([
+            'studentId' => 'required',
+            'batchId' => 'required',
+        ]);
+
+        $batch = Batch::find($request->batchId);
+
+        if ($batch->end_date < Carbon::now()->format('Y-m-d')) {
+            return response()->json(['message' => 'Batch has ended, cannot add new student'], 400);
+        }
+
+        $studentBatchExists = StudentBatch::where('userId', $request->studentId)
+            ->where('batchId', $request->batchId)
+            ->exists();
+
+        if ($studentBatchExists) {
+            return response()->json(['message' => 'Student has already been assigned to this batch'], 422);
+        }
+
+        $studentBatch = new StudentBatch();
+        $studentBatch->userId = $request->studentId;
+        $studentBatch->batchId = $request->batchId;
+
+        $studentBatch->save();
+
+        $batch = Batch::find($request->batchId);
+        $course = $batch->course()->first();
+
+        $userFeeDetail = new UserFeeDetail();
+        $userFeeDetail->userId = $request->studentId;
+        $userFeeDetail->batchId = $batch->batchId;
+        $userFeeDetail->amountToBePaid = $course->totalFee;
+        $userFeeDetail->remainingAmount = $course->totalFee;
+        $userFeeDetail->save();
+
+        return response()->json('Student inserted to batch successfully');
+    }
+
+    public function deleteStudentFromBatch($batchId, $studentId)
+    {
+        $studentBatch = StudentBatch::where('userId', $studentId)->where('batchId', $batchId)->first();
+
+        $studentBatch->deleted_at = now();
+        $studentBatch->save();
+
+        $userFeeDetail = UserFeeDetail::where('userId', $studentId)->where('batchId', $batchId)->first();
+        $userFeeDetail->deleted_at = now();
+        $userFeeDetail->save();
+
+        return response()->json(['message' => 'Student removed from batch successfully'], 200);
     }
 }

@@ -34,15 +34,25 @@ class UserFeeDetailController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $userId)
+    public function show(Request $request, string $userId)
     {
-        $data = UserFeeDetail::where("userId", $userId)->first();
+        $limit = (int)$request->limit;
+
+        $data = UserFeeDetail::where("userId", $userId)
+            ->with(['batch' => function ($query) {
+                $query->select('batchId', 'name', 'courseId'); // Select only these fields from batch table
+            }, 'batch.course:courseId,name'])
+            ->select('userFeeDetailId', 'amountToBePaid', 'remainingAmount', 'totalAmountPaid', 'batchId');
+
+        if ($request->has('limit')) {
+            $data = $data->paginate($limit);
+        } else {
+            $data = $data->get();
+        }
 
         if (!$data) {
             return response()->json(['message' => 'User Fee detail not found'], 404);
         }
-
-        $data->course = $data->course()->first();
 
         return response()->json($data);
     }

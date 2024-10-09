@@ -36,6 +36,7 @@ class UserController extends Controller
     {
         $limit = (int)$request->limit;
         $search = $request->search;
+        $excludedBatchId = $request->excludedBatchId;
 
         // Convert comma-separated string to an array if necessary
         $roles = is_string($request->query('role')) ? explode(',', $request->query('role')) : [$request->query('role')];
@@ -55,14 +56,14 @@ class UserController extends Controller
             'users.emergencyContactNo',
             'users.startDate',
             'users.parents_name',
-            'student_batches.batchId',
-            'batches.name AS batchname',
+            // 'student_batches.batchId',
+            // 'batches.name AS batchname',
             'users.created_at'
             // 'accountant_blocks.blockId',
             // 'blocks.name AS blockname',
         )
-            ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
-            ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
+            // ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
+            // ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
             // ->leftJoin('accountant_blocks', 'users.userId', '=', 'accountant_blocks.userId')
             // ->leftJoin('blocks', 'accountant_blocks.blockId', '=', 'blocks.blockId')
             ->orderBy('created_at', 'desc')
@@ -75,6 +76,14 @@ class UserController extends Controller
                     $subquery->where('users.name', 'like', "%$search%")
                         ->orWhere('users.email', 'like', "%$search%")
                         ->orWhere('users.phoneNo', 'like', "%$search%");
+                });
+            }) // Exclude students from the specified batch
+            ->when($excludedBatchId, function ($query, $excludedBatchId) {
+                return $query->whereNotIn('users.userId', function ($subquery) use ($excludedBatchId) {
+                    $subquery->select('userId')
+                        ->from('student_batches')
+                        ->where('batchId', $excludedBatchId)
+                        ->where('deleted_at', null);
                 });
             });
 
@@ -134,21 +143,21 @@ class UserController extends Controller
             $insertUser->save();
             // dd($request->batchId);
 
-            $studentBatch = new StudentBatch;
-            $studentBatch->batchId = $request->batchId;
-            $studentBatch->userId = $insertUser->userId;
-            $studentBatch->save();
+            // $studentBatch = new StudentBatch;
+            // $studentBatch->batchId = $request->batchId;
+            // $studentBatch->userId = $insertUser->userId;
+            // $studentBatch->save();
 
-            $batch = Batch::find($request->batchId);
-            $course = $batch->course()->first();
+            // $batch = Batch::find($request->batchId);
+            // $course = $batch->course()->first();
 
 
-            $userFeeDetail = new UserFeeDetail();
-            $userFeeDetail->userId = $insertUser->userId;
-            $userFeeDetail->courseId = $course->courseId;
-            $userFeeDetail->amountToBePaid = $course->totalFee;
-            $userFeeDetail->remainingAmount = $course->totalFee;
-            $userFeeDetail->save();
+            // $userFeeDetail = new UserFeeDetail();
+            // $userFeeDetail->userId = $insertUser->userId;
+            // $userFeeDetail->courseId = $course->courseId;
+            // $userFeeDetail->amountToBePaid = $course->totalFee;
+            // $userFeeDetail->remainingAmount = $course->totalFee;
+            // $userFeeDetail->save();
         }
 
         return response()->json('User Inserted Sucessfully');
@@ -169,9 +178,8 @@ class UserController extends Controller
         }
 
         if ($user->hasRole('mentor')) {
-            $mentorCourses = $user->mentorCourses;
-            if ($mentorCourses->count() > 0) {
-                return response()->json(['message' => 'Cannot delete mentor, they are assigned to courses'], 422);
+            if ($user->mentorBatches->count() > 0) {
+                return response()->json(['message' => 'Cannot delete mentor, they are assigned to batches'], 422);
             }
         }
 
@@ -179,6 +187,11 @@ class UserController extends Controller
             $job = $user->job;
             if ($job->count() > 0) {
                 return response()->json(['message' => 'Cannot delete student, they are assigned to internship/job'], 422);
+            }
+
+            $batch = $user->batches;
+            if ($batch->count() > 0) {
+                return response()->json(['message' => 'Cannot delete student, they are assigned to batches'], 422);
             }
 
             $payment = Payment::where('payed_by', $userId)->first();

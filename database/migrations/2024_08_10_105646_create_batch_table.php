@@ -21,6 +21,8 @@ return new class extends Migration
             $table->time('time')->nullable();
             $table->unsignedBigInteger('courseId')->nullable();
             $table->foreign('courseId')->references('courseId')->on('courses')->onDelete('cascade');
+            $table->unsignedBigInteger('mentorId')->nullable();
+            $table->foreign('mentorId')->references('userId')->on('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
         });

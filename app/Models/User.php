@@ -4,14 +4,12 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-use Illuminate\Bus\Batch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements JWTSubject
@@ -89,9 +87,9 @@ class User extends Authenticatable implements JWTSubject
     //     return $this->hasMany(StudentBatch::class, 'userId');
     // }
 
-    public function batches(): HasManyThrough
+    public function batches(): HasMany
     {
-        return $this->hasManyThrough(Batch::class, StudentBatch::class, 'userId', 'batchId');
+        return $this->hasMany(StudentBatch::class, 'userId');
     }
     public function course()
     {
@@ -112,9 +110,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->role === $role;
     }
-    public function mentorCourses(): HasMany
+    public function mentorBatches()
     {
-        return $this->hasMany(MentorCourse::class, 'userId');
+        return $this->hasMany(Batch::class, 'mentorId', 'userId');
     }
     public function userFeeDetail(): HasMany
     {

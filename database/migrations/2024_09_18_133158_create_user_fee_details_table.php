@@ -16,8 +16,8 @@ return new class extends Migration
             $table->id('userFeeDetailId');
             $table->unsignedBigInteger('userId');
             $table->foreign('userId')->references('userId')->on('users')->onDelete('cascade');
-            $table->unsignedBigInteger('courseId');
-            $table->foreign('courseId')->references('courseId')->on('courses')->onDelete('cascade');
+            $table->unsignedBigInteger('batchId');
+            $table->foreign('batchId')->references('batchId')->on('batches')->onDelete('cascade');
             $table->integer('amountToBePaid')->default(0);
             $table->integer('totalAmountPaid')->default(0);
             $table->integer('remainingAmount')->default(0);

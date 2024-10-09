@@ -102,7 +102,9 @@ Route::group([
     Route::get('/batch/{batchId}', [BatchController::class, 'singleBatch'])->name('SingleBatch');
     Route::put('/batch/{batchId}', [BatchController::class, 'updateBatch'])->name('UpdateBatch');
     Route::get('/searchbatch', [BatchController::class, 'searchBatch'])->name('SearchBatch');
+    Route::post('/batch/add-student', [BatchController::class, 'addStudentToBatch'])->name('addStudentToBatch');
     Route::get('/batch/students/{batchId}', [BatchController::class, 'studentsByBatch'])->name('StudentsByBatch');
+    Route::delete('/batches/{batchId}/students/{studentId}', [BatchController::class, 'deleteStudentFromBatch'])->name('StudentdeleteStudentFromBatchsByBatch');
 
     //Route Block
     Route::get('/block', [BlockController::class, 'showBlock'])->name("ShowBlock");
