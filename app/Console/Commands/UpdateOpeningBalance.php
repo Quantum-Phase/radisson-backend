@@ -62,13 +62,13 @@ class UpdateOpeningBalance extends Command
         }
         // Calculate today's total debit and credit
         $totalDebit = DB::table('payments')
-            ->where('type', 'debit')
+            ->where('type', 'pay')
             ->whereDate('created_at', $today)
             ->sum('amount');
 
 
         $totalCredit = DB::table('payments')
-            ->where('type', 'credit')
+            ->where('type', 'receive')
             ->whereDate('created_at', $today)
             ->sum('amount');
 

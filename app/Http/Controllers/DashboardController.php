@@ -24,7 +24,7 @@ class DashboardController extends Controller
 
         $totalCourseCount = Course::count();
 
-        $totalCreditAmount = Payment::where('type', 'credit')->sum('amount');
+        $totalCreditAmount = Payment::where('type', 'receive')->sum('amount');
 
         return response()->json([
             'staffCount' => $staffCount,

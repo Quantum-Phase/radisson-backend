@@ -16,17 +16,21 @@ return new class extends Migration
             $table->string('name')->nullable(false);
             $table->string('type')->nullable(false);
             $table->integer('amount')->nullable(false);
-            // $table->unsignedBigInteger('payed_by');
-            // $table->foreign('payed_by')->references('userId')->on('users')->onDelete('cascade');
-            $table->unsignedBigInteger('courseId');
-            $table->foreign('courseId')->references('courseId')->on('courses')->onDelete('cascade');
-            $table->string('payment_mode');
+
+            $table->unsignedBigInteger('batchId')->nullable();
+            $table->foreign('batchId')->references('batchId')->on('batches')->onDelete('cascade');
+
+            $table->unsignedBigInteger('blockId')->nullable();
+            $table->foreign('blockId')->references('blockId')->on('blocks')->onDelete('cascade');
+
+            $table->unsignedBigInteger('paymentModeId');
+            $table->foreign('paymentModeId')->references('paymentModeId')->on('payment_modes')->onDelete('cascade');
+
             $table->string('remarks')->nullable();
-            // $table->unsignedBigInteger('recieved_by');
-            // $table->foreign('recieved_by')->references('userId')->on('users')->onDelete('cascade');
+
             $table->foreignId('payed_by')->nullable();
             $table->foreignId('received_by');
-            // $table->integer('due_amount')->nullable();
+
             $table->integer('due_amount')->default(0);
             $table->timestamps();
             $table->softDeletes();

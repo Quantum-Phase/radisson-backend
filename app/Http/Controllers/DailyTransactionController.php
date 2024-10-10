@@ -62,7 +62,7 @@ class DailyTransactionController extends Controller
                 ];
             }
 
-            if ($payment->type == 'credit') {
+            if ($payment->type == 'receive') {
                 $totalCredit += $payment->amount;
                 $result[$payment->blockId]['credit'][] = [
                     'paymentId' => $payment->paymentId,
@@ -71,7 +71,7 @@ class DailyTransactionController extends Controller
                     'amount' => $payment->amount,
                 ];
                 $result[$payment->blockId]['totalCredit'] += $payment->amount;
-            } elseif ($payment->type == 'debit') {
+            } elseif ($payment->type == 'pay') {
                 $totalDebit += $payment->amount;
                 $result[$payment->blockId]['debit'][] = [
                     'paymentId' => $payment->paymentId,

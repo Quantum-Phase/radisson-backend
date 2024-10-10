@@ -13,9 +13,9 @@ class Payment extends Model
         'paymentId',
         'amount',
         'payedBy',
-        'courseId',
+        'batchId',
         'receipt_no',
-        'payment_mode',
+        'paymentModeId',
         'blockId',
         'recievedBy'
     ];
@@ -29,19 +29,24 @@ class Payment extends Model
     // Set to false if primary key is not an integer
     protected $keyType = 'int'; // or 'string' if using a non-integer key
 
-    public function payer()
+    public function payedBy()
     {
-        return $this->belongsTo(User::class, 'userId');
-    }
-
-    public function course()
-    {
-        return $this->belongsTo(Course::class, 'courseId');
+        return $this->belongsTo(User::class, 'payed_by');
     }
 
     public function receivedBy()
     {
-        return $this->belongsTo(User::class, 'userId');
+        return $this->belongsTo(User::class, 'received_by');
+    }
+
+    public function batch()
+    {
+        return $this->belongsTo(Batch::class, 'batchId');
+    }
+
+    public function paymentMode()
+    {
+        return $this->belongsTo(PaymentMode::class, 'paymentModeId');
     }
 
     public function block()

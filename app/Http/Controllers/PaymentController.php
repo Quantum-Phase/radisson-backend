@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Batch;
 use App\Models\Block;
 use App\Models\Course;
 use App\Models\Payment;
@@ -21,28 +22,36 @@ class PaymentController extends Controller
         $search = $request->search;
         $payed_by = $request->payerId;
 
-        $payments = Payment::select('payments.*')
-            ->leftJoin('users', 'payments.payed_by', '=', 'users.userId')
-            ->leftJoin('courses', 'payments.courseId', '=', 'courses.courseId')
-            ->leftJoin('users as received_by_users', 'payments.received_by', '=', 'received_by_users.userId')
-            ->addSelect([
-                'paid_by' => User::select('name')->whereColumn('userId', 'payments.payed_by')->limit(1),
-                'payer_mobile_number' => User::select('phoneNo')->whereColumn('userId', 'payments.payed_by')->limit(1),
-                'course_name' => Course::select('name')->whereColumn('courseId', 'payments.courseId')->limit(1),
-                'payment_received_by' => User::select('name')->whereColumn('userId', 'payments.received_by')->limit(1),
-                'block_name' => Block::select('name')->whereColumn('blockId', 'payments.blockId')->limit(1),
-                'payed_by' // Including payed_by explicitly in the select
-            ])
-            ->orderBy('created_at', 'desc')
+        $payments = Payment::with([
+            'payedBy:userId,name,phoneNo',
+            'receivedBy:userId,name',
+            'batch' => function ($query) {
+                $query->select('batchId', 'name', 'courseId');
+            },
+            'batch.course' => function ($query) {
+                $query->select('courseId', 'name');
+            },
+            'paymentMode' => function ($query) {
+                $query->select('paymentModeId', 'name');
+            },
+            'block'
+        ])
             ->when($payed_by, function ($query) use ($payed_by) {
-                $query->where('payments.payed_by', $payed_by);
+                $query->where('payed_by', $payed_by);
             })
             ->where(function ($query) use ($search) {
-                $query->where('payments.name', 'like', '%' . $search . '%')
-                    ->orWhere('users.name', 'like', '%' . $search . '%')
-                    ->orWhere('courses.name', 'like', '%' . $search . '%')
-                    ->orWhere('received_by_users.name', 'like', '%' . $search . '%');
-            });
+                $query->where('name', 'like', '%' . $search . '%')
+                    ->orWhereHas('payedBy', function ($query) use ($search) {
+                        $query->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('batch', function ($query) use ($search) {
+                        $query->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('receivedBy', function ($query) use ($search) {
+                        $query->where('name', 'like', '%' . $search . '%');
+                    });
+            })
+            ->orderBy('created_at', 'desc');
 
         // Paginate if limit is provided, else get all
         if ($request->has('limit')) {
@@ -62,7 +71,7 @@ class PaymentController extends Controller
     {
         $request->validate([
             'amount' => 'required',
-            'payment_mode' => 'required|string',
+            'paymentModeId' => 'required',
             'name' => 'required|string',
             'type' => 'required|string',
             'blockId' => 'required|exists:blocks,blockId'
@@ -71,7 +80,7 @@ class PaymentController extends Controller
 
         $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->first();
 
-        if ($request->type === "credit"  && $request->payed_by) {
+        if ($request->type === "receive"  && $request->payed_by) {
 
             if (!$userFeeDetail) {
                 return response()->json(['message' => 'User Fee detail not found'], 404);
@@ -85,22 +94,22 @@ class PaymentController extends Controller
         $payment = new Payment();
         $payment->amount = $request->amount;
         $payment->payed_by = $request->payed_by;
-        $payment->courseId = $request->courseId;
-        $payment->payment_mode = $request->payment_mode;
+        $payment->batchId = $request->batchId;
+        $payment->paymentModeId = $request->paymentModeId;
         $payment->blockId = $request->blockId;
         $payment->remarks = $request->remarks;
         $payment->name = $request->name;
         $payment->type = $request->type;
         $payment->received_by = $user->userId;
 
-        if ($request->type === 'credit' && $request->payed_by) {
+        if ($request->type === 'receive' && $request->payed_by) {
             $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
 
             $payment->due_amount = $userFeeDetail->amountToBePaid -  $userFeeDetail->totalAmountPaid;
         }
 
         $payment->save();
-        if ($request->type === 'credit' && $request->payed_by) {
+        if ($request->type === 'receive' && $request->payed_by) {
             $userFeeDetail->update();
         }
         return response()->json('Payment inserted successfully');
