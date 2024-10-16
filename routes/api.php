@@ -52,7 +52,7 @@ Route::group([
     Route::post('/user', [UserController::class, 'insertUser'])->name('insertUser');
     Route::delete('/user/{userId}', [UserController::class, 'deleteUser'])->name('deleteUser');
     Route::get('/user/{userId}', [UserController::class, 'singleUser'])->name('singleUser');
-    Route::put('/user/{userId}', [UserController::class, 'updateUser'])->name('updateUser');
+    Route::post('/user/{userId}', [UserController::class, 'updateUser'])->name('updateUser');
     Route::get('/searchuser', [UserController::class, 'searchUser'])->name('SearchUser');
     Route::post('/profile', [UserController::class, 'updateProfile'])->name('updateProfile');
     Route::post('/change-password', [UserController::class, 'changePassword'])->name('changePassword');

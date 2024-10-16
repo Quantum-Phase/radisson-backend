@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserFeeDetail;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 
@@ -98,16 +99,14 @@ class UserController extends Controller
     public function insertUser(Request $request)
     {
         $request->validate([
-            'profileimg' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'start_date' => 'date_format:Y-m-d',
             'date' => 'date_format:Y-m-d',
-            'email' => Rule::unique('users', 'email')->whereNull('deleted_at'),
+            'email' => [
+                Rule::unique('users', 'email')->whereNull('deleted_at'),
+                $request->role !== 'student' ? 'required' : 'nullable',
+            ],
             'phoneNo' => Rule::unique('users', 'phoneNo')->whereNull('deleted_at'),
         ]);
-
-        $file = $request->file('profileimg');
-        $imageName = time() . '.' . $file->extension();
-        $file->move(public_path('profileImage'), $imageName);
 
         $formattedStartDate = Carbon::parse($request->start_date)->format('Y-m-d');
         $formattedDob = Carbon::parse($request->date)->format('Y-m-d');
@@ -123,9 +122,16 @@ class UserController extends Controller
         $insertUser->permanentAddress = $request->paddress;
         $insertUser->temporaryAddress = $request->taddress;
         // $insertUser->startDate = $formattedStartDate;
-        $insertUser->profileimg = 'profileImage/' . $imageName;
         $insertUser->emergencyContactNo = $request->econtact;
         $insertUser->parents_name = $request->parents_name;
+
+        if ($request->hasFile('profileimg')) {
+            $file = $request->file('profileimg');
+            $imageName = time() . '.' . $file->extension();
+            $file->move(public_path('profileImage'), $imageName);
+
+            $insertUser->profileImg = 'profileImage/' . $imageName;
+        }
 
         if ($insertUser->hasRole('accountant')) {
             $insertUser->blockId = $request->blockId;
@@ -139,25 +145,7 @@ class UserController extends Controller
 
             // Update the student_code for the user
             $insertUser->student_code = $studentCode;
-            // $insertUser->time = $request->time;
             $insertUser->save();
-            // dd($request->batchId);
-
-            // $studentBatch = new StudentBatch;
-            // $studentBatch->batchId = $request->batchId;
-            // $studentBatch->userId = $insertUser->userId;
-            // $studentBatch->save();
-
-            // $batch = Batch::find($request->batchId);
-            // $course = $batch->course()->first();
-
-
-            // $userFeeDetail = new UserFeeDetail();
-            // $userFeeDetail->userId = $insertUser->userId;
-            // $userFeeDetail->courseId = $course->courseId;
-            // $userFeeDetail->amountToBePaid = $course->totalFee;
-            // $userFeeDetail->remainingAmount = $course->totalFee;
-            // $userFeeDetail->save();
         }
 
         return response()->json('User Inserted Sucessfully');
@@ -275,7 +263,9 @@ class UserController extends Controller
 
     public function updateUser(Request $request, $userId)
     {
+        Log::info($request->all()); // Log the request data
         $request->validate([
+            'name' => 'required|string',
             'email' => [
                 Rule::unique('users', 'email')->ignore($userId, 'userId')->whereNull('deleted_at'),
             ],
@@ -303,8 +293,8 @@ class UserController extends Controller
 
         if ($request->hasFile('profileimg')) {
 
-            if ($data->profileimg && file_exists(public_path($data->profileimg))) {
-                unlink(public_path($data->profileimg));
+            if ($data->profileImg && file_exists(public_path($data->profileImg))) {
+                unlink(public_path($data->profileImg));
             }
 
 
@@ -312,7 +302,7 @@ class UserController extends Controller
             $imageName = time() . '.' . $file->extension();
             $file->move(public_path('profileImage'), $imageName);
 
-            $data->profileimg = 'profileImage/' . $imageName;
+            $data->profileImg = 'profileImage/' . $imageName;
         }
 
         $data->update();
@@ -365,15 +355,15 @@ class UserController extends Controller
         $userdata->gender = $request->gender;
 
         if ($request->hasFile('profileimg')) {
-            if ($userdata->profileimg && file_exists(public_path($userdata->profileimg))) {
-                unlink(public_path($userdata->profileimg));
+            if ($userdata->profileImg && file_exists(public_path($userdata->profileImg))) {
+                unlink(public_path($userdata->profileImg));
             }
 
             $file = $request->file('profileimg');
             $imageName = time() . '.' . $file->extension();
             $file->move(public_path('profileImage'), $imageName);
 
-            $userdata->profileimg = 'profileImage/' . $imageName;
+            $userdata->profileImg = 'profileImage/' . $imageName;
         }
 
         if ($userdata) {
