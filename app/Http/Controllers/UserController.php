@@ -76,7 +76,9 @@ class UserController extends Controller
                 return $query->where(function ($subquery) use ($search) {
                     $subquery->where('users.name', 'like', "%$search%")
                         ->orWhere('users.email', 'like', "%$search%")
-                        ->orWhere('users.phoneNo', 'like', "%$search%");
+                        ->orWhere('users.phoneNo', 'like', "%$search%")
+                        ->orWhere('users.role', 'like', "%$search%")
+                        ->orWhere('users.student_code', 'like', "%$search%");
                 });
             }) // Exclude students from the specified batch
             ->when($excludedBatchId, function ($query, $excludedBatchId) {
