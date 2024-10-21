@@ -131,6 +131,10 @@ class LedgerController extends Controller
             return response()->json(['message' => 'Ledger not found'], 404);
         }
 
+        if ($ledger->payments()->exists()) {
+            return response()->json(['message' => 'Ledger has been assigned to payments, cannot be deleted'], 422);
+        }
+
         $ledger->delete(); // or $ledger->forceDelete(); if you want to permanently delete
 
         return response()->json('Ledger Deleted Successfully');

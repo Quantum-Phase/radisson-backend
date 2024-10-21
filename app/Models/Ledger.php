@@ -27,4 +27,9 @@ class Ledger extends Model
 
     // Set to false if primary key is not an integer
     protected $keyType = 'int'; // or 'string' if using a non-integer key
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'paymentId', 'paymentId');
+    }
 }
