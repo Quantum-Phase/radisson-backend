@@ -29,5 +29,11 @@ class UserSeeder extends Seeder
             ['name' => 'Block A'],
             ['name' => 'Block B'],
         ]);
+
+        DB::table('ledgers')->insert([
+            'name' => 'Student Payment',
+            'type' => "income",
+            'isDefaultIncome' => true
+        ]);
     }
 }
