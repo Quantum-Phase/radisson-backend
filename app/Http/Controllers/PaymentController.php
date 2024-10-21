@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Batch;
-use App\Models\Block;
-use App\Models\Course;
+use App\Constants\LedgerType;
+use App\Models\Ledger;
 use App\Models\Payment;
-use App\Models\User;
 use App\Models\UserFeeDetail;
 use Illuminate\Http\Request;
 
@@ -24,9 +22,12 @@ class PaymentController extends Controller
 
         $payments = Payment::with([
             'payedBy:userId,name,phoneNo',
-            'receivedBy:userId,name',
+            'transactionBy:userId,name',
             'batch' => function ($query) {
                 $query->select('batchId', 'name', 'courseId');
+            },
+            'ledger' => function ($query) {
+                $query->select('ledgerId', 'name');
             },
             'batch.course' => function ($query) {
                 $query->select('courseId', 'name');
@@ -47,7 +48,7 @@ class PaymentController extends Controller
                     ->orWhereHas('batch', function ($query) use ($search) {
                         $query->where('name', 'like', '%' . $search . '%');
                     })
-                    ->orWhereHas('receivedBy', function ($query) use ($search) {
+                    ->orWhereHas('transactionBy', function ($query) use ($search) {
                         $query->where('name', 'like', '%' . $search . '%');
                     });
             })
@@ -74,13 +75,29 @@ class PaymentController extends Controller
             'paymentModeId' => 'required',
             'name' => 'required|string',
             'type' => 'required|string',
-            'blockId' => 'required|exists:blocks,blockId'
+            'blockId' => 'required|exists:blocks,blockId',
         ]);
         $user = auth()->user();
 
-        $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->first();
 
-        if ($request->type === "receive"  && $request->payed_by) {
+        if ($request->amount <= 0) {
+            return response()->json(['error' => 'Invalid amount'], 422);
+        }
+
+        $payment = new Payment();
+        $payment->amount = $request->amount;
+        $payment->payed_by = $request->payed_by;
+        $payment->batchId = $request->batchId;
+        $payment->ledgerId = $request->ledgerId;
+        $payment->paymentModeId = $request->paymentModeId;
+        $payment->blockId = $request->blockId;
+        $payment->remarks = $request->remarks;
+        $payment->name = $request->name;
+        $payment->type = $request->type;
+        $payment->transaction_by = $user->userId;
+
+        if ($request->type === LedgerType::INCOME  && $request->batchId) {
+            $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->first();
 
             if (!$userFeeDetail) {
                 return response()->json(['message' => 'User Fee detail not found'], 404);
@@ -89,29 +106,30 @@ class PaymentController extends Controller
             if ($userFeeDetail->remainingAmount < $request->amount) {
                 return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 404);
             }
-        }
 
-        $payment = new Payment();
-        $payment->amount = $request->amount;
-        $payment->payed_by = $request->payed_by;
-        $payment->batchId = $request->batchId;
-        $payment->paymentModeId = $request->paymentModeId;
-        $payment->blockId = $request->blockId;
-        $payment->remarks = $request->remarks;
-        $payment->name = $request->name;
-        $payment->type = $request->type;
-        $payment->received_by = $user->userId;
-
-        if ($request->type === 'receive' && $request->payed_by) {
             $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
 
             $payment->due_amount = $userFeeDetail->amountToBePaid -  $userFeeDetail->totalAmountPaid;
-        }
 
-        $payment->save();
-        if ($request->type === 'receive' && $request->payed_by) {
+            $payment->save();
             $userFeeDetail->update();
         }
+
+        // if ($request->type === LedgerType::INCOME && $request->batchId) {
+        //     $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
+
+        //     $payment->due_amount = $userFeeDetail->amountToBePaid -  $userFeeDetail->totalAmountPaid;
+        // }
+        if ($request->type !== LedgerType::INCOME || !$request->batchId) {
+            $payment->save();
+        }
+
+        $ledger = Ledger::find($request->ledgerId);
+        $ledger->amount = $ledger->amount + $request->amount;
+        $ledger->update();
+        // if ($request->type === LedgerType::INCOME && $request->payed_by) {
+        //     $userFeeDetail->update();
+        // }
         return response()->json('Payment inserted successfully');
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DailyTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\UserFeeDetailController;
@@ -86,14 +87,12 @@ Route::group([
     Route::put('/job/{workId}', [JobController::class, 'updateJob'])->name('UpdateJob');
     Route::get('/searchjob', [JobController::class, 'searchJob'])->name('SearchJob');
 
-    //Route Fee
-    // Route::get('/fee', [FeeController::class, 'showFee'])->name("ShowFee");
-    // Route::post('/fee', [FeeController::class, 'insertFee'])->name('InsertFee');
-    // Route::delete('/fee/{feeId}', [FeeController::class, 'deleteFee'])->name('DeleteFee');
-    // Route::get('/fee/{feeId}', [FeeController::class, 'updatef'])->name('updateFee');
-    // Route::put('/fee/{feeId}', [FeeController::class, 'updateFee'])->name('UpdateFee');
-    // Route::get('/searchfee', [FeeController::class, 'searchFee'])->name('SearchFee');
-
+    //Route Ledger
+    Route::get('/ledger', [LedgerController::class, 'getAll'])->name('getAll');
+    Route::post('/ledger', [LedgerController::class, 'createNew'])->name('createNew');
+    Route::delete('/ledger/{ledgerId}', [LedgerController::class, 'destroy'])->name('destroy');
+    Route::get('/ledger/{ledgerId}', [LedgerController::class, 'getSingle'])->name('getSingle');
+    Route::put('/ledger/{ledgerId}', [LedgerController::class, 'update'])->name('update');
 
     //Route Batch
     Route::get('/batch', [BatchController::class, 'showBatch'])->name("ShowBatch");

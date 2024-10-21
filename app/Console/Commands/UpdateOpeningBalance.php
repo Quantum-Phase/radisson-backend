@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Constants\LedgerType;
 use App\Models\DailyTransaction;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -62,13 +63,13 @@ class UpdateOpeningBalance extends Command
         }
         // Calculate today's total debit and credit
         $totalDebit = DB::table('payments')
-            ->where('type', 'pay')
+            ->where('type', LedgerType::EXPENSE)
             ->whereDate('created_at', $today)
             ->sum('amount');
 
 
         $totalCredit = DB::table('payments')
-            ->where('type', 'receive')
+            ->where('type', LedgerType::INCOME)
             ->whereDate('created_at', $today)
             ->sum('amount');
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\LedgerType;
 use App\Models\Block;
 use App\Models\Payment;
 use Illuminate\Http\Request;
@@ -62,7 +63,7 @@ class DailyTransactionController extends Controller
                 ];
             }
 
-            if ($payment->type == 'receive') {
+            if ($payment->type === LedgerType::INCOME) {
                 $totalCredit += $payment->amount;
                 $result[$payment->blockId]['credit'][] = [
                     'paymentId' => $payment->paymentId,
@@ -71,7 +72,7 @@ class DailyTransactionController extends Controller
                     'amount' => $payment->amount,
                 ];
                 $result[$payment->blockId]['totalCredit'] += $payment->amount;
-            } elseif ($payment->type == 'pay') {
+            } elseif ($payment->type === LedgerType::EXPENSE) {
                 $totalDebit += $payment->amount;
                 $result[$payment->blockId]['debit'][] = [
                     'paymentId' => $payment->paymentId,

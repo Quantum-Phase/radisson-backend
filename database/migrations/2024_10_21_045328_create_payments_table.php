@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id('paymentId');
             $table->string('name')->nullable(false);
-            $table->string('type')->nullable(false);
-            $table->integer('amount')->nullable(false);
+            $table->enum('type', ['income', 'expense', 'liability', 'assets'])->nullable(false);
+            $table->integer('amount')->nullable(false)->default(0);
+
+            $table->unsignedBigInteger('ledgerId')->nullable();
+            $table->foreign('ledgerId')->references('ledgerId')->on('ledgers')->onDelete('cascade');
 
             $table->unsignedBigInteger('batchId')->nullable();
             $table->foreign('batchId')->references('batchId')->on('batches')->onDelete('cascade');
@@ -23,15 +26,16 @@ return new class extends Migration
             $table->unsignedBigInteger('blockId')->nullable();
             $table->foreign('blockId')->references('blockId')->on('blocks')->onDelete('cascade');
 
-            $table->unsignedBigInteger('paymentModeId');
+            $table->unsignedBigInteger('paymentModeId')->nullable();
             $table->foreign('paymentModeId')->references('paymentModeId')->on('payment_modes')->onDelete('cascade');
 
             $table->string('remarks')->nullable();
 
             $table->foreignId('payed_by')->nullable();
-            $table->foreignId('received_by');
+            $table->foreignId('transaction_by')->nullable(false);
 
-            $table->integer('due_amount')->default(0);
+            $table->integer('due_amount')->nullable(false)->default(0);
+
             $table->timestamps();
             $table->softDeletes();
         });

@@ -11,10 +11,12 @@ class Payment extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = [
         'paymentId',
+        'name',
+        'type',
+        'remarks',
         'amount',
         'payedBy',
         'batchId',
-        'receipt_no',
         'paymentModeId',
         'blockId',
         'recievedBy'
@@ -34,9 +36,9 @@ class Payment extends Model
         return $this->belongsTo(User::class, 'payed_by');
     }
 
-    public function receivedBy()
+    public function transactionBy()
     {
-        return $this->belongsTo(User::class, 'received_by');
+        return $this->belongsTo(User::class, 'transaction_by');
     }
 
     public function batch()
@@ -52,5 +54,10 @@ class Payment extends Model
     public function block()
     {
         return $this->belongsTo(Block::class, 'blockId');
+    }
+
+    public function ledger()
+    {
+        return $this->belongsTo(Ledger::class, 'ledgerId');
     }
 }

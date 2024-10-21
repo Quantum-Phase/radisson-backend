@@ -161,7 +161,7 @@ class UserController extends Controller
         }
 
         if ($user->role !== "student") {
-            $payment = Payment::where('received_by', $userId)->first();
+            $payment = Payment::where('transaction_by', $userId)->first();
             if ($payment) {
                 return response()->json(['message' => 'Cannot delete user'], 422);
             }
