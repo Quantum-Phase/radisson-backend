@@ -30,6 +30,6 @@ class Ledger extends Model
 
     public function payments()
     {
-        return $this->hasMany(Payment::class, 'paymentId', 'paymentId');
+        return $this->hasMany(Payment::class, 'ledgerId', 'ledgerId');
     }
 }
