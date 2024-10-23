@@ -7,6 +7,8 @@ use App\Models\Ledger;
 use App\Models\Payment;
 use App\Models\UserFeeDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 
 class PaymentController extends Controller
@@ -132,4 +134,35 @@ class PaymentController extends Controller
         // }
         return response()->json('Payment inserted successfully');
     }
+
+    public function profitLoss(Request $request)
+{
+    $limit = (int)$request->limit;
+    $day = Carbon::parse($request->thisday)->setTimezone('UTC')->format('Y-m-d');
+    $week = Carbon::now()->weekOfYear; // Current week of the year
+    $year = Carbon::now()->year;
+    // dd($day);
+    // dd($week);
+    // dd($year);
+
+    // $paymentDetails = Payment::when($day, function ($query, $day) {
+    //         return $query->whereDate('created_at', $day);
+    //     })
+    //     ->when($week, function ($query, $week) {
+    //         return $query->whereWeek('created_at', $week);
+    //     })
+    //     ->when($year, function ($query, $year) {
+    //         return $query->whereYear('created_at', $year);
+    //     })
+    //     ->limit($limit)
+    //     ->get();
+
+    // $paymentDetails=DB::statement("SELECT * FROM payments WHERE DATE(created_at) = '2024-10-23'");
+    // $paymentDetails=DB::select("SELECT * FROM payments WHERE DATE(created_at) = '2024-10-23'");
+    $paymentDetails = DB::select("SELECT * FROM payments WHERE DATE(created_at) = ?", [$day]);
+    // dd($paymentDetails);
+
+    return response()->json($paymentDetails);
+}
+
 }
