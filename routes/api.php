@@ -114,7 +114,7 @@ Route::group([
     //Route Payment
     Route::get('/payment', [PaymentController::class, 'index'])->name("index");
     Route::post('/payment', [PaymentController::class, 'create'])->name("create");
-    Route::get('/payment/financialOverview',[PaymentController::class,'profitLoss'])->name('ProfitLoss');
+    Route::get('/payment/financial-overview', [PaymentController::class, 'getFinancialOverview'])->name('getFinancialOverview');
 
     //Route Daily Transaction
     Route::get('/transaction', [DailyTransactionController::class, 'showTransaction'])->name('showTransaction');

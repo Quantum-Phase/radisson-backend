@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Constants\LedgerType;
+use App\Models\Block;
 use App\Models\Ledger;
 use App\Models\Payment;
 use App\Models\UserFeeDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 
 class PaymentController extends Controller
@@ -135,34 +135,115 @@ class PaymentController extends Controller
         return response()->json('Payment inserted successfully');
     }
 
-    public function profitLoss(Request $request)
-{
-    $limit = (int)$request->limit;
-    $day = Carbon::parse($request->thisday)->setTimezone('UTC')->format('Y-m-d');
-    $week = Carbon::now()->weekOfYear; // Current week of the year
-    $year = Carbon::now()->year;
-    // dd($day);
-    // dd($week);
-    // dd($year);
+    public function getFinancialOverview(Request $request)
+    {
+        $financeType = $request->financeType;
+        $dateType = $request->dateType ? $request->dateType : "today";
 
-    // $paymentDetails = Payment::when($day, function ($query, $day) {
-    //         return $query->whereDate('created_at', $day);
-    //     })
-    //     ->when($week, function ($query, $week) {
-    //         return $query->whereWeek('created_at', $week);
-    //     })
-    //     ->when($year, function ($query, $year) {
-    //         return $query->whereYear('created_at', $year);
-    //     })
-    //     ->limit($limit)
-    //     ->get();
+        $type = [];
 
-    // $paymentDetails=DB::statement("SELECT * FROM payments WHERE DATE(created_at) = '2024-10-23'");
-    // $paymentDetails=DB::select("SELECT * FROM payments WHERE DATE(created_at) = '2024-10-23'");
-    $paymentDetails = DB::select("SELECT * FROM payments WHERE DATE(created_at) = ?", [$day]);
-    // dd($paymentDetails);
+        if ($financeType === "balance-sheet") {
+            $type = [LedgerType::LIABILITY, LedgerType::ASSETS];
+        } elseif ($financeType === "profit-loss") {
+            $type = [LedgerType::INCOME, LedgerType::EXPENSE];
+        } else {
+            return response()->json(['message' => "Invalid finance type"], 422);
+        }
 
-    return response()->json($paymentDetails);
-}
+        // Start the query for payments
+        $paymentsQuery = Payment::with([
+            'ledger' => function ($query) {
+                $query->select('ledgerId', 'name');
+            },
+        ])
+            ->when($type, function ($query, $type) {
+                return $query->whereIn("payments.type", $type);
+            });
 
+        // Apply date filtering based on dateType
+        $today = Carbon::today();
+        switch ($dateType) {
+            case 'today':
+                $paymentsQuery->whereDate('created_at', $today);
+                break;
+            case 'weekly':
+                $startOfWeek = $today->copy()->startOfWeek(); // Default is Sunday
+                $endOfWeek = $today->copy()->endOfWeek(); // Default is Saturday
+                $paymentsQuery->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
+                break;
+            case 'monthly':
+                $paymentsQuery->whereMonth('created_at', $today->month)
+                    ->whereYear('created_at', $today->year);
+                break;
+            case 'yearly':
+                $paymentsQuery->whereYear('created_at', $today->year);
+                break;
+            default:
+                // Optionally handle 'daily' or other cases if needed
+                break;
+        }
+
+        // Execute the query and group the results by payment type
+        $payments = $paymentsQuery->get()->groupBy('type');
+
+        // Initialize an array to hold the formatted response
+        $formattedResponse = [];
+
+        // Define the expected types
+        $expectedTypes = $type;
+
+        // Loop through each expected type
+        foreach ($expectedTypes as $expectedType) {
+            // Check if there are payments for this type
+            if (isset($payments[$expectedType])) {
+                $totalAmountByType = $payments[$expectedType]->sum('amount');
+                $paymentsByType = $payments[$expectedType];
+
+                // Group by ledger name
+                $groupedByLedger = $paymentsByType->groupBy('ledger.name');
+
+                // Initialize an array for this type
+                $ledgerArray = [];
+
+                // Loop through each ledger and format the response
+                foreach ($groupedByLedger as $ledgerName => $paymentsByLedger) {
+                    // Calculate total amount for this ledger
+                    $totalAmountByLedger = $paymentsByLedger->sum('amount');
+
+                    // Prepare the ledger response
+                    $ledgerResponse = [
+                        'ledgerName' => $ledgerName,
+                        'total' => $totalAmountByLedger, // Total for this ledger
+                        'payments' => $paymentsByLedger->map(function ($payment) {
+                            return [
+                                'id' => $payment->paymentId,
+                                'name' => $payment->name,
+                                'amount' => $payment->amount,
+                            ];
+                        })->toArray()
+                    ];
+
+                    // Add the ledger response to the ledger array
+                    $ledgerArray[] = $ledgerResponse;
+                }
+
+                // Add the type and its ledgers to the formatted response
+                $formattedResponse[] = [
+                    'type' => $expectedType,
+                    'totalAmountByType' => $totalAmountByType,
+                    'ledger' => $ledgerArray,
+                ];
+            } else {
+                // If no payments for this type, add an empty ledger array
+                $formattedResponse[] = [
+                    'type' => $expectedType,
+                    'ledger' => [],
+                    'totalAmountByType' => 0
+                ];
+            }
+        }
+
+        // Return the formatted response as JSON
+        return response()->json($formattedResponse);
+    }
 }
