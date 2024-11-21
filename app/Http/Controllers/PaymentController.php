@@ -22,6 +22,8 @@ class PaymentController extends Controller
         $search = $request->search;
         $payed_by = $request->payerId;
 
+        $types = is_string($request->query('type')) ? explode(',', $request->query('type')) : [$request->query('type')];
+
         $payments = Payment::with([
             'payedBy:userId,name,phoneNo',
             'transactionBy:userId,name',
@@ -41,6 +43,9 @@ class PaymentController extends Controller
         ])
             ->when($payed_by, function ($query) use ($payed_by) {
                 $query->where('payed_by', $payed_by);
+            })
+            ->when($types, function ($query) use ($types) {
+                return $query->whereIn('type', $types);
             })
             ->where(function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%')

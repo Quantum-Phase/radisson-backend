@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ApiController;
+use App\Http\Controllers\BalanceSheetController;
 use App\Http\Controllers\BatchController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseController;
@@ -124,4 +125,9 @@ Route::group([
     Route::post('/payment-mode', [PaymentModeController::class, 'createNew'])->name('createNew');
     Route::delete('/payment-mode/{paymentModeId}', [PaymentModeController::class, 'destroy'])->name('destroy');
     Route::put('/payment-mode/{paymentModeId}', [PaymentModeController::class, 'update'])->name('update');
+
+    //Balance Sheet
+    Route::get('/balance-sheet', [BalanceSheetController::class, 'index'])->name("index");
+    Route::post('/balance-sheet', [BalanceSheetController::class, 'create'])->name('create');
+    Route::get('/balance-sheet/financial-overview', [BalanceSheetController::class, 'getFinancialOverview'])->name('getFinancialOverview');
 });
