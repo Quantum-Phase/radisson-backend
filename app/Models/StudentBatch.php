@@ -12,7 +12,10 @@ class StudentBatch extends Model
 
     protected $fillable = [
         'userId',
-        'batchId'
+        'batchId',
+        'discountType',
+        'discountAmount',
+        'discountPercent'
     ];
 
     // Define the relationship to the User model

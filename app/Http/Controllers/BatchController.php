@@ -8,6 +8,7 @@ use App\Models\StudentBatch;
 use App\Models\UserFeeDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class BatchController extends Controller
@@ -171,6 +172,7 @@ class BatchController extends Controller
         $feeStatus = $request->feeStatus;
 
         $students = StudentBatch::where('batchId', $batchId)
+            ->orderBy('created_at', 'desc')
             ->with('user', 'user.userFeeDetail') // eager load the user relationship
             ->when($search, function ($query) use ($search) {
                 $query->whereHas('user', function ($subquery) use ($search) {
@@ -223,37 +225,46 @@ class BatchController extends Controller
         $request->validate([
             'studentId' => 'required',
             'batchId' => 'required',
+            'discountType' => 'nullable|in:percent,amount',
+            'discountAmount' => 'required_if:discountType,amount',
+            'discountPercent' => 'required_if:discountType,percent',
         ]);
 
         $batch = Batch::find($request->batchId);
 
-        if ($batch->end_date < Carbon::now()->format('Y-m-d')) {
-            return response()->json(['message' => 'Batch has ended, cannot add new student'], 400);
+        if (!$batch || $batch->end_date < Carbon::now()->format('Y-m-d')) {
+            return response()->json(['message' => 'Batch has ended or not found, cannot add new student'], 400);
         }
 
-        $studentBatchExists = StudentBatch::where('userId', $request->studentId)
-            ->where('batchId', $request->batchId)
-            ->exists();
-
-        if ($studentBatchExists) {
+        if (StudentBatch::where('userId', $request->studentId)->where('batchId', $request->batchId)->exists()) {
             return response()->json(['message' => 'Student has already been assigned to this batch'], 422);
         }
 
-        $studentBatch = new StudentBatch();
-        $studentBatch->userId = $request->studentId;
-        $studentBatch->batchId = $request->batchId;
+        DB::transaction(function () use ($request, $batch) {
+            StudentBatch::create([
+                'userId' => $request->studentId,
+                'batchId' => $request->batchId,
+                'discountType' => $request->discountType,
+                'discountAmount' => (int) $request->discountAmount,
+                'discountPercent' => (int) $request->discountPercent,
+            ]);
 
-        $studentBatch->save();
+            $course = $batch->course()->first();
+            $amountToBePaid = $course->totalFee;
 
-        $batch = Batch::find($request->batchId);
-        $course = $batch->course()->first();
+            if ($request->discountType === "percent") {
+                $amountToBePaid -= (int) (($request->discountPercent / 100) * $course->totalFee);
+            } elseif ($request->discountType === "amount") {
+                $amountToBePaid -= (int) $request->discountAmount;
+            }
 
-        $userFeeDetail = new UserFeeDetail();
-        $userFeeDetail->userId = $request->studentId;
-        $userFeeDetail->batchId = $batch->batchId;
-        $userFeeDetail->amountToBePaid = $course->totalFee;
-        $userFeeDetail->remainingAmount = $course->totalFee;
-        $userFeeDetail->save();
+            UserFeeDetail::create([
+                'userId' => $request->studentId,
+                'batchId' => $batch->batchId,
+                'amountToBePaid' => $amountToBePaid,
+                'remainingAmount' => $amountToBePaid,
+            ]);
+        });
 
         return response()->json('Student inserted to batch successfully');
     }
