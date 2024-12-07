@@ -116,7 +116,7 @@ class BatchController extends Controller
     {
         $batch_data = Batch::with([
             'course' => function ($query) {
-                $query->select('courseId', 'name');
+                $query->select('courseId', 'name', 'totalFee');
             },
             'mentor' => function ($query) {
                 $query->select('userId', 'name');
@@ -168,9 +168,10 @@ class BatchController extends Controller
     {
         $limit = (int)$request->limit;
         $search = $request->search;
+        $feeStatus = $request->feeStatus;
 
         $students = StudentBatch::where('batchId', $batchId)
-            ->with('user') // eager load the user relationship
+            ->with('user', 'user.userFeeDetail') // eager load the user relationship
             ->when($search, function ($query) use ($search) {
                 $query->whereHas('user', function ($subquery) use ($search) {
                     $subquery->where('name', 'like', "%$search%")
@@ -179,6 +180,19 @@ class BatchController extends Controller
                 });
             });
 
+        // Filter based on feeStatus
+        if ($feeStatus === 'paid') {
+            $students = $students->whereHas('user.userFeeDetail', function ($query) use ($batchId) {
+                $query->where('batchId', $batchId)
+                    ->where('remainingAmount', 0);
+            });
+        } elseif ($feeStatus === 'unpaid') {
+            $students = $students->whereHas('user.userFeeDetail', function ($query) use ($batchId) {
+                $query->where('batchId', $batchId)
+                    ->where('remainingAmount', '>', 0);
+            });
+        }
+
         if ($request->has('limit')) {
             $students = $students->paginate($limit);
         } else {
@@ -186,13 +200,18 @@ class BatchController extends Controller
         }
 
         // Transform data to return student details
-        $students->transform(function ($student) {
+        $students->transform(function ($student) use ($batchId) {
+            $userFeeDetails = $student->user->userFeeDetail()->where('batchId', $batchId)->get();
+
             return [
                 'userId' => $student->user->userId ?? null,
                 'name' => $student->user->name ?? null,
                 'email' => $student->user->email ?? null,
                 'phoneNo' => $student->user->phoneNo ?? null,
-                'created_at' => $student->user->created_at ?? null
+                'created_at' => $student->user->created_at ?? null,
+                'amountToBePaid' => $userFeeDetails->sum('amountToBePaid') ?? null,
+                'totalAmountPaid' => $userFeeDetails->sum('totalAmountPaid') ?? null,
+                'remainingAmount' => $userFeeDetails->sum('remainingAmount') ?? null,
             ];
         });
 

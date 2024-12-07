@@ -47,4 +47,9 @@ class Batch extends Model
     {
         return $this->belongsTo(User::class, 'mentorId', 'userId');
     }
+
+    public function userFeeDetail(): HasMany
+    {
+        return $this->hasMany(UserFeeDetail::class, 'batchId');
+    }
 }
