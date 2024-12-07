@@ -104,7 +104,7 @@ class PaymentController extends Controller
         $payment->transaction_by = $user->userId;
 
         if ($request->type === LedgerType::INCOME  && $request->batchId) {
-            $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->first();
+            $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->where("batchId", $request->batchId)->first();
 
             if (!$userFeeDetail) {
                 return response()->json(['message' => 'User Fee detail not found'], 404);

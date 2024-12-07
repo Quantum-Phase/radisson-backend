@@ -19,6 +19,8 @@ class CompanyController extends Controller
             'company.companyId',
             'company.name',
             'company.address',
+            'company.contactPerson',
+            'company.contactNumber',
         )
             ->orderBy('created_at', 'desc')
             ->when($search, function ($query, $search) {
@@ -48,6 +50,8 @@ class CompanyController extends Controller
                 'max:255',
             ],
             'address' => 'required|string|max:255',
+            'contactPerson' => 'required|string|max:255',
+            'contactNumber' => 'required|string|max:255',
         ]);
 
         $companyExists = Company::where('name', $request->name)
@@ -61,6 +65,8 @@ class CompanyController extends Controller
         $company = new Company();
         $company->name = $request->name;
         $company->address = $request->address;
+        $company->contactPerson = $request->contactPerson;
+        $company->contactNumber = $request->contactNumber;
 
         $company->save();
 
@@ -92,6 +98,8 @@ class CompanyController extends Controller
                 'max:255',
             ],
             'address' => 'required|string|max:255',
+            'contactPerson' => 'required|string|max:255',
+            'contactNumber' => 'required|string|max:255',
         ]);
 
         $companyExists = Company::where('name', $request->name)
@@ -106,6 +114,8 @@ class CompanyController extends Controller
         $company = Company::find($companyId);
         $company->name = $request->name;
         $company->address = $request->address;
+        $company->contactPerson = $request->contactPerson;
+        $company->contactNumber = $request->contactNumber;
 
         $company->update();
 

@@ -57,7 +57,9 @@ class JobController extends Controller
             ->where(function ($query) use ($search) {
                 $query->where('type', 'like', "%$search%")
                     ->orWhereHas('student', function ($query) use ($search) {
-                        $query->where('name', 'like', "%$search%");
+                        $query->where('name', 'like', "%$search%")
+                            ->orWhere('email', 'like', "%$search%")
+                            ->orWhere('phoneNo', 'like', "%$search%");
                     })
                     ->orWhereHas('department', function ($query) use ($search) {
                         $query->where('name', 'like', "%$search%");
