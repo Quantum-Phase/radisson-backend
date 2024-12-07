@@ -15,7 +15,9 @@ class Company extends Model
     protected $fillable = [
         'companyId',
         'name',
-        'address'
+        'address',
+        'contactPerson',
+        'contactNumber',
     ];
 
     // Specify the primary key for the model

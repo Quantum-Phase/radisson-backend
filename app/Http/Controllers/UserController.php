@@ -38,6 +38,7 @@ class UserController extends Controller
         $limit = (int)$request->limit;
         $search = $request->search;
         $excludedBatchId = $request->excludedBatchId;
+        $duesPaidStudent = filter_var($request->input('duesPaidStudent'), FILTER_VALIDATE_BOOLEAN);
 
         // Convert comma-separated string to an array if necessary
         $roles = is_string($request->query('role')) ? explode(',', $request->query('role')) : [$request->query('role')];
@@ -57,16 +58,8 @@ class UserController extends Controller
             'users.emergencyContactNo',
             'users.startDate',
             'users.parents_name',
-            // 'student_batches.batchId',
-            // 'batches.name AS batchname',
             'users.created_at'
-            // 'accountant_blocks.blockId',
-            // 'blocks.name AS blockname',
         )
-            // ->leftJoin('student_batches', 'users.userId', '=', 'student_batches.userId')
-            // ->leftJoin('batches', 'student_batches.batchId', '=', 'batches.batchId')
-            // ->leftJoin('accountant_blocks', 'users.userId', '=', 'accountant_blocks.userId')
-            // ->leftJoin('blocks', 'accountant_blocks.blockId', '=', 'blocks.blockId')
             ->orderBy('created_at', 'desc')
             ->when($roles, function ($query, $roles) {
                 return $query->whereIn('users.role', $roles);
@@ -80,13 +73,19 @@ class UserController extends Controller
                         ->orWhere('users.role', 'like', "%$search%")
                         ->orWhere('users.student_code', 'like', "%$search%");
                 });
-            }) // Exclude students from the specified batch
+            })
+            // Exclude students from the specified batch
             ->when($excludedBatchId, function ($query, $excludedBatchId) {
                 return $query->whereNotIn('users.userId', function ($subquery) use ($excludedBatchId) {
                     $subquery->select('userId')
                         ->from('student_batches')
                         ->where('batchId', $excludedBatchId)
                         ->where('deleted_at', null);
+                });
+            }) // Filter for students who have paid all dues if duesPaidStudent is true
+            ->when($duesPaidStudent, function ($query) {
+                return $query->whereDoesntHave('userFeeDetail', function ($subquery) {
+                    $subquery->where('remainingAmount', '>', 0);
                 });
             });
 
