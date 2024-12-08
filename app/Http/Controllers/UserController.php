@@ -37,6 +37,7 @@ class UserController extends Controller
     {
         $limit = (int)$request->limit;
         $search = $request->search;
+        $blockId = $request->blockId;
         $excludedBatchId = $request->excludedBatchId;
         $duesPaidStudent = filter_var($request->input('duesPaidStudent'), FILTER_VALIDATE_BOOLEAN);
 
@@ -53,6 +54,7 @@ class UserController extends Controller
             'users.gender',
             'users.profileImg',
             'users.role',
+            'users.blockId',
             'users.permanentAddress',
             'users.temporaryAddress',
             'users.emergencyContactNo',
@@ -63,6 +65,9 @@ class UserController extends Controller
             ->orderBy('created_at', 'desc')
             ->when($roles, function ($query, $roles) {
                 return $query->whereIn('users.role', $roles);
+            })
+            ->when($blockId, function ($query, $blockId) {
+                return $query->where('users.blockId', $blockId);
             })
             // Add search filtering based on search query
             ->when($search, function ($query, $search) {

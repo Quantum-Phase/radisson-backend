@@ -22,6 +22,8 @@ class PaymentController extends Controller
         $search = $request->search;
         $payed_by = $request->payerId;
 
+        $user = auth()->user();
+
         $types = is_string($request->query('type')) ? explode(',', $request->query('type')) : [$request->query('type')];
 
         $payments = Payment::with([
@@ -61,6 +63,10 @@ class PaymentController extends Controller
             })
             ->orderBy('created_at', 'desc');
 
+        if ($user->role !== "superadmin") {
+            $payments->where("transaction_by", $user->userId);
+        }
+
         // Paginate if limit is provided, else get all
         if ($request->has('limit')) {
             $payments = $payments->paginate($limit);
@@ -85,7 +91,6 @@ class PaymentController extends Controller
             'blockId' => 'required|exists:blocks,blockId',
         ]);
         $user = auth()->user();
-
 
         if ($request->amount <= 0) {
             return response()->json(['error' => 'Invalid amount'], 422);
@@ -144,6 +149,7 @@ class PaymentController extends Controller
     {
         $financeType = $request->financeType;
         $dateType = $request->dateType ? $request->dateType : "today";
+        $user = auth()->user();
 
         $type = [];
 
@@ -186,6 +192,10 @@ class PaymentController extends Controller
             default:
                 // Optionally handle 'daily' or other cases if needed
                 break;
+        }
+
+        if ($user->role !== "superadmin") {
+            $paymentsQuery->where("transaction_by", $user->userId);
         }
 
         // Execute the query and group the results by payment type
