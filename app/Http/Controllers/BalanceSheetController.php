@@ -19,6 +19,8 @@ class BalanceSheetController extends Controller
         $limit = (int)$request->limit;
         $search = $request->search;
 
+        $user = auth()->user();
+
         $balanceSheet = BalanceSheet::with([
             'transactionBy:userId,name',
             'assets' => function ($query) {
@@ -42,6 +44,10 @@ class BalanceSheetController extends Controller
                     });
             })
             ->orderBy('created_at', 'desc');
+
+        if ($user->role !== "superadmin") {
+            $balanceSheet->where("transactionBy", $user->userId);
+        }
 
         // Paginate if limit is provided, else get all
         if ($request->has('limit')) {
@@ -103,6 +109,7 @@ class BalanceSheetController extends Controller
     public function getFinancialOverview(Request $request)
     {
         $dateType = $request->dateType ? $request->dateType : "today";
+        $user = auth()->user();
 
         // Initialize the payments query
         $balanceSheetQuery = BalanceSheet::query();
@@ -129,6 +136,11 @@ class BalanceSheetController extends Controller
                 // Optionally handle 'daily' or other cases if needed
                 break;
         }
+
+        if ($user->role !== "superadmin") {
+            $balanceSheetQuery->where("transactionBy", $user->userId);
+        }
+
         $response = $balanceSheetQuery->get();
 
         $grouped = [

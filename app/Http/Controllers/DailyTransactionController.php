@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Constants\LedgerType;
 use App\Models\Block;
 use App\Models\Payment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -25,19 +26,20 @@ class DailyTransactionController extends Controller
 
         $user = auth()->user();
         $blockId = $request->blockId;
+        $transactionBy = $request->transactionBy;
 
-        // Get today's date
-        $today = now()->startOfDay();
-        $openingblnc = DB::table('daily_transactions')->whereDate('created_at', $today)->first();
+        $date = $request->date ? Carbon::parse($request->date)->startOfDay() : now()->startOfDay();
+
+        $openingblnc = DB::table('daily_transactions')->whereDate('created_at', $date)->first();
         if ($openingblnc) {
             $openingBalance = $openingblnc->opening_balance;
         }
 
         // Fetch payments made today
-        $paymentsQuery = Payment::whereDate('created_at', '=', $today);
+        $paymentsQuery = Payment::whereDate('created_at', '=', $date);
 
-        if ($user->role === 'accountant') {
-            $paymentsQuery->where('blockId', $user->blockId);
+        if ($user->role !== 'superadmin') {
+            $paymentsQuery->where('blockId', $user->blockId)->where('transaction_by', $user->userId);
         } else if ($blockId && $blockId !== 'all') {
             $paymentsQuery->where('blockId', $blockId);
         } else {
@@ -46,6 +48,9 @@ class DailyTransactionController extends Controller
 
         $payments = $paymentsQuery
             ->orderBy('created_at', 'desc')
+            ->when($transactionBy, function ($query) use ($transactionBy) {
+                $query->where('transaction_by', $transactionBy);
+            })
             ->get(['paymentId', 'name', 'type', 'amount', 'blockId']);
 
         // Process payments and group by block name and type
@@ -108,7 +113,7 @@ class DailyTransactionController extends Controller
             'totalCredit' => $totalCredit,
             'totalDebit' => $totalDebit,
             'data' => $finalResult,
-            'date' => $today
+            'date' => $date
         ]);
     }
 }
