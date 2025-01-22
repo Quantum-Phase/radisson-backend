@@ -29,7 +29,13 @@ return new class extends Migration
             CREATE TRIGGER update_remaining_amount
             BEFORE UPDATE ON user_fee_details
             FOR EACH ROW
-            SET NEW.remainingAmount = NEW.amountToBePaid - NEW.totalAmountPaid;
+            BEGIN
+                IF NEW.amountToBePaid > NEW.totalAmountPaid THEN
+                    SET NEW.remainingAmount = NEW.amountToBePaid - NEW.totalAmountPaid;
+                ELSE
+                    SET NEW.remainingAmount = 0;
+                END IF;
+            END;
         ');
     }
 

@@ -15,7 +15,8 @@ class UserFeeDetail extends Model
         'batchId',
         'amountToBePaid',
         'totalAmountPaid',
-        'remainingAmount'
+        'remainingAmount',
+        'refundAmount'
     ];
 
     // Specify the primary key for the model

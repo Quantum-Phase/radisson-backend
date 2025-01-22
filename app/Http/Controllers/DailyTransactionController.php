@@ -4,14 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Constants\LedgerType;
 use App\Models\Block;
+use App\Models\Ledger;
 use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
-
-
-
 
 class DailyTransactionController extends Controller
 {
@@ -51,7 +48,7 @@ class DailyTransactionController extends Controller
             ->when($transactionBy, function ($query) use ($transactionBy) {
                 $query->where('transaction_by', $transactionBy);
             })
-            ->get(['paymentId', 'name', 'type', 'amount', 'blockId']);
+            ->get(['paymentId', 'name', 'type', 'amount', 'blockId', 'ledgerId']);
 
         // Process payments and group by block name and type
         foreach ($payments as $payment) {
@@ -69,23 +66,27 @@ class DailyTransactionController extends Controller
             }
 
             if ($payment->type === LedgerType::INCOME) {
-                $totalCredit += $payment->amount;
-                $result[$payment->blockId]['credit'][] = [
-                    'paymentId' => $payment->paymentId,
-                    'name' => $payment->name,
-                    'type' => $payment->type,
-                    'amount' => $payment->amount,
-                ];
                 $result[$payment->blockId]['totalCredit'] += $payment->amount;
+                if (!isset($result[$payment->blockId]['credit'][$payment->ledgerId])) {
+                    $ledgerName = Ledger::find($payment->ledgerId)->name ?? 'Unknown Ledger'; // Handle if ledger is not found
+                    $result[$payment->blockId]['credit'][$payment->ledgerId] = [
+                        'ledgerId' => $payment->ledgerId,
+                        'name' => $ledgerName,
+                        'amount' => 0,
+                    ];
+                }
+                $result[$payment->blockId]['credit'][$payment->ledgerId]['amount'] += $payment->amount;
             } elseif ($payment->type === LedgerType::EXPENSE) {
-                $totalDebit += $payment->amount;
-                $result[$payment->blockId]['debit'][] = [
-                    'paymentId' => $payment->paymentId,
-                    'name' => $payment->name,
-                    'type' => $payment->type,
-                    'amount' => $payment->amount,
-                ];
                 $result[$payment->blockId]['totalDebit'] += $payment->amount;
+                if (!isset($result[$payment->blockId]['debit'][$payment->ledgerId])) {
+                    $ledgerName = Ledger::find($payment->ledgerId)->name ?? 'Unknown Ledger'; // Handle if ledger is not found
+                    $result[$payment->blockId]['debit'][$payment->ledgerId] = [
+                        'ledgerId' => $payment->ledgerId,
+                        'name' => $ledgerName,
+                        'amount' => 0,
+                    ];
+                }
+                $result[$payment->blockId]['debit'][$payment->ledgerId]['amount'] += $payment->amount;
             }
         }
 
@@ -97,11 +98,11 @@ class DailyTransactionController extends Controller
                 'blockName' => $data['blockName'],
                 'credit' => [
                     'total' => $data['totalCredit'],
-                    'payments' => $data['credit'],
+                    'payments' => array_values($data['credit']),
                 ],
                 'debit' => [
                     'total' => $data['totalDebit'],
-                    'payments' => $data['debit'],
+                    'payments' => array_values($data['debit']),
                 ],
             ];
         }

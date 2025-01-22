@@ -9,6 +9,7 @@ use App\Models\UserFeeDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class BatchController extends Controller
@@ -34,6 +35,7 @@ class BatchController extends Controller
         $limit = (int)$request->limit;
         $search = $request->search;
         $studentId = $request->studentId;
+        $excludedBatchId = $request->excludedBatchId;
 
         $batch_data = Batch::select(
             'batches.batchId',
@@ -57,6 +59,8 @@ class BatchController extends Controller
                 $query->whereHas('studentBatches', function ($query) use ($studentId) {
                     $query->where('userId', $studentId);
                 });
+            })->when($excludedBatchId, function ($query, $excludedBatchId) {
+                return $query->whereNotIn('batchId', [$excludedBatchId]);
             });
 
         if ($request->has('limit')) {
@@ -214,6 +218,7 @@ class BatchController extends Controller
                 'amountToBePaid' => $userFeeDetails->sum('amountToBePaid') ?? null,
                 'totalAmountPaid' => $userFeeDetails->sum('totalAmountPaid') ?? null,
                 'remainingAmount' => $userFeeDetails->sum('remainingAmount') ?? null,
+                'refundAmount' => $userFeeDetails->sum('refundAmount') ?? null,
             ];
         });
 
@@ -263,6 +268,7 @@ class BatchController extends Controller
                 'batchId' => $batch->batchId,
                 'amountToBePaid' => $amountToBePaid,
                 'remainingAmount' => $amountToBePaid,
+                'refundAmount' => 0
             ]);
         });
 
@@ -281,5 +287,111 @@ class BatchController extends Controller
         $userFeeDetail->save();
 
         return response()->json(['message' => 'Student removed from batch successfully'], 200);
+    }
+
+    public function transferStudent(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'studentId' => 'required|exists:users,userId', // Ensure the student exists
+            'oldBatchId' => 'required|exists:batches,batchId', // Ensure the old batch exists
+            'newBatchId' => 'required|exists:batches,batchId', // Ensure the new batch exists
+        ]);
+
+        // Find the old and new batches
+        $oldBatch = Batch::find($request->oldBatchId);
+
+        if (!$oldBatch) {
+            return response()->json(['message' => 'Old batch not found'], 404);
+        }
+
+        $newBatch = Batch::find($request->newBatchId);
+
+        if (!$newBatch) {
+            return response()->json(['message' => 'New batch not found'], 404);
+        }
+
+        // Check if the student is already assigned to the new batch
+        $alreadyAssignedToNewBatch = StudentBatch::where('userId', $request->studentId)
+            ->where('batchId', $request->newBatchId)
+            ->exists();
+
+        if ($alreadyAssignedToNewBatch) {
+            return response()->json(['message' => 'Student is already assigned to the new batch'], 400);
+        }
+
+        // Start a database transaction
+        DB::beginTransaction();
+        try {
+            // Find the user fee details for the old batch
+            $userFeeDetailForOldBatch = UserFeeDetail::where('userId', $request->studentId)
+                ->where('batchId', $request->oldBatchId)
+                ->first();
+
+            if (!$userFeeDetailForOldBatch) {
+                throw new \Exception('User fee details for the old batch not found');
+            }
+
+            if ($userFeeDetailForOldBatch->refundAmount > 0) {
+                throw new \Exception('Please pay the refund amount before procceding');
+            }
+
+            // Create a new student batch relationship with the new batch
+            StudentBatch::create([
+                'userId' => $request->studentId,
+                'batchId' => $request->newBatchId,
+                'discountType' => $oldBatch->discountType,
+                'discountAmount' => (int) $oldBatch->discountAmount,
+                'discountPercent' => (int) $oldBatch->discountPercent,
+                'isTransfered' => true
+            ]);
+
+            // Mark the old batch as deleted
+            $oldStudentBatch = StudentBatch::where('userId', $request->studentId)->where('batchId', $request->oldBatchId)->first();
+
+            $oldStudentBatch->deleted_at = now();
+            $oldStudentBatch->save();
+
+            // Find the course for the new batch
+            $course = $newBatch->course()->first();
+            if (!$course) {
+                throw new \Exception('Course not found for the new batch');
+            }
+
+            // Calculate the total amount to be paid
+            $amountToBePaid = $course->totalFee;
+
+            // Calculate the remaining amount and refund amount
+            $remainingAmount = $amountToBePaid - $userFeeDetailForOldBatch->totalAmountPaid;
+            $refundAmount = 0;
+
+            if ($remainingAmount < 0) {
+                $refundAmount = abs($remainingAmount); // Use absolute value for refund
+                $remainingAmount = 0;
+            }
+
+            // Create a new user fee detail for the new batch
+            UserFeeDetail::create([
+                'userId' => $request->studentId,
+                'batchId' => $request->newBatchId,
+                'amountToBePaid' => $amountToBePaid,
+                'totalAmountPaid' => $userFeeDetailForOldBatch->totalAmountPaid,
+                'remainingAmount' => $remainingAmount,
+                'refundAmount' => $refundAmount,
+            ]);
+
+            $userFeeDetailForOldBatch->deleted_at = now();
+            $userFeeDetailForOldBatch->save();
+
+            // Commit the transaction
+            DB::commit();
+
+            return response()->json(['message' => 'Student transferred successfully'], 200);
+        } catch (\Exception $e) {
+            // Rollback the transaction on error
+            DB::rollBack();
+            Log::error('Error transferring student: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to transfer student: ' . $e->getMessage()], 500);
+        }
     }
 }

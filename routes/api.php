@@ -105,6 +105,7 @@ Route::group([
     Route::post('/batch/add-student', [BatchController::class, 'addStudentToBatch'])->name('addStudentToBatch');
     Route::get('/batch/students/{batchId}', [BatchController::class, 'studentsByBatch'])->name('StudentsByBatch');
     Route::delete('/batches/{batchId}/students/{studentId}', [BatchController::class, 'deleteStudentFromBatch'])->name('StudentdeleteStudentFromBatchsByBatch');
+    Route::post('/batch/transfer-student', [BatchController::class, 'transferStudent'])->name('transferStudent');
 
     //Route Block
     Route::get('/block', [BlockController::class, 'showBlock'])->name("ShowBlock");
@@ -115,6 +116,7 @@ Route::group([
     //Route Payment
     Route::get('/payment', [PaymentController::class, 'index'])->name("index");
     Route::post('/payment', [PaymentController::class, 'create'])->name("create");
+    Route::put('/payment/{paymentId}', [PaymentController::class, 'editPayment'])->name("editPayment");
     Route::get('/payment/financial-overview', [PaymentController::class, 'getFinancialOverview'])->name('getFinancialOverview');
 
     //Route Daily Transaction

@@ -42,7 +42,7 @@ class UserFeeDetailController extends Controller
             ->with(['batch' => function ($query) {
                 $query->select('batchId', 'name', 'courseId'); // Select only these fields from batch table
             }, 'batch.course:courseId,name'])
-            ->select('userFeeDetailId', 'amountToBePaid', 'remainingAmount', 'totalAmountPaid', 'batchId');
+            ->select('userFeeDetailId', 'amountToBePaid', 'remainingAmount', 'totalAmountPaid', 'batchId', 'refundAmount');
 
         if ($request->has('limit')) {
             $data = $data->paginate($limit);

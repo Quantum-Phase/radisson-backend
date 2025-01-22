@@ -15,7 +15,8 @@ class StudentBatch extends Model
         'batchId',
         'discountType',
         'discountAmount',
-        'discountPercent'
+        'discountPercent',
+        'isTransfered'
     ];
 
     // Define the relationship to the User model

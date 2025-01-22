@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Constants\LedgerType;
-use App\Models\Block;
 use App\Models\Ledger;
 use App\Models\Payment;
 use App\Models\UserFeeDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -88,6 +87,7 @@ class PaymentController extends Controller
             'paymentModeId' => 'required',
             'name' => 'required|string',
             'type' => 'required|string',
+            'actionType' => 'required|string',
             'blockId' => 'required|exists:blocks,blockId',
         ]);
         $user = auth()->user();
@@ -106,22 +106,33 @@ class PaymentController extends Controller
         $payment->remarks = $request->remarks;
         $payment->name = $request->name;
         $payment->type = $request->type;
+        $payment->actionType = $request->actionType;
         $payment->transaction_by = $user->userId;
 
-        if ($request->type === LedgerType::INCOME  && $request->batchId) {
+        if ($request->type && $request->actionType && $request->batchId) {
             $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->where("batchId", $request->batchId)->first();
 
             if (!$userFeeDetail) {
                 return response()->json(['message' => 'User Fee detail not found'], 404);
             }
 
-            if ($userFeeDetail->remainingAmount < $request->amount) {
-                return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 404);
+            if ($request->type === LedgerType::INCOME && $request->actionType === "fee") {
+                if ($userFeeDetail->remainingAmount < $request->amount) {
+                    return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 404);
+                }
+
+                $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
+
+                $payment->due_amount = $userFeeDetail->amountToBePaid -  $userFeeDetail->totalAmountPaid;
             }
 
-            $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
+            if ($request->type === LedgerType::EXPENSE && $request->actionType === "refund") {
+                if ($userFeeDetail->refundAmount < $request->amount) {
+                    return response()->json(['message' => 'Paying amount cannot be greater than refund amount.'], 404);
+                }
 
-            $payment->due_amount = $userFeeDetail->amountToBePaid -  $userFeeDetail->totalAmountPaid;
+                $userFeeDetail->refundAmount = $userFeeDetail->refundAmount - $request->amount;
+            }
 
             $payment->save();
             $userFeeDetail->update();
@@ -260,5 +271,65 @@ class PaymentController extends Controller
 
         // Return the formatted response as JSON
         return response()->json($formattedResponse);
+    }
+
+    public function editPayment(Request $request, $paymentId)
+    {
+        $request->validate([
+            'amount' => 'required',
+            'paymentModeId' => 'required',
+            'name' => 'required|string',
+            'blockId' => 'required|exists:blocks,blockId',
+        ]);
+
+        $payment = Payment::find($paymentId);
+
+        if (!$payment) {
+            return response()->json(['message' => "Payment doesn't exists."], 404);
+        }
+
+        // Get the created_at date of the payment
+        $createdAt = Carbon::parse($payment->created_at);
+
+        // Get today's date
+        $today = Carbon::now();
+
+        // Check if created_at exceeds today's date
+        if ($createdAt->gt($today)) {
+            return response()->json(['message' => 'Payment created_at date exceeds today\'s date'], 422);
+        }
+
+        $userFeeDetail = UserFeeDetail::where("userId", $payment->payed_by)->where("batchId", $payment->batchId)->first();
+
+        if (!$userFeeDetail) {
+            return response()->json(['message' => 'User Fee detail not found'], 404);
+        }
+
+        if ($payment->actionType === "fee") {
+            if (($userFeeDetail->remainingAmount + $payment->amount) < $request->amount) {
+                return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 422);
+            }
+            $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid - $payment->amount + $request->amount;
+            Log::info("totalAmountPaid" . $userFeeDetail->totalAmountPaid);
+            Log::info("amount" . $payment->amount);
+            Log::info("request amount" . $request->amount);
+        }
+
+        if ($payment->actionType === "refund") {
+            if (($userFeeDetail->refundAmount + $payment->amount) < $request->amount) {
+                return response()->json(['message' => 'Paying amount cannot be greater than refund amount.'], 422);
+            }
+            $userFeeDetail->refundAmount = $userFeeDetail->refundAmount - $payment->amount + $request->amount;
+        }
+
+        $payment->amount = $request->amount;
+        $payment->paymentModeId = $request->paymentModeId;
+        $payment->name = $request->name;
+        $payment->blockId = $request->blockId;
+        $payment->remarks = $request->remarks;
+
+        $userFeeDetail->update();
+        $payment->update();
+        return response()->json('Payment updated successfully');
     }
 }
