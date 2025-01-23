@@ -35,5 +35,38 @@ class UserSeeder extends Seeder
             'type' => "income",
             'isDefaultIncome' => true
         ]);
+
+        DB::table('ledgers')->insert([
+            'name' => 'Student Payment',
+            'type' => "income",
+            'isDefaultIncome' => true
+        ]);
+
+        DB::table('ledger_type')->insert([
+            ['name' => 'Bank Accounts', 'type' =>  'assets'],
+            ['name' => 'Cash', 'type' => 'assets'],
+            ['name' => 'Current Assets', 'type' => 'assets'],
+            ['name' => 'Fixed Assets', 'type' => 'assets'],
+            ['name' => 'Investment', 'type' => 'assets'],
+            ['name' => 'Stock', 'type' => 'assets'],
+            ['name' => 'Receivable', 'type' => 'assets'],
+
+            ['name' => 'Capital Account', 'type' => 'liability'],
+            ['name' => 'Current Liability', 'type' => 'liability'],
+            ['name' => 'Payable', 'type' => 'liability'],
+            ['name' => 'Loan', 'type' => 'liability'],
+            ['name' => 'Reserve & Surplus', 'type' => 'liability'],
+            ['name' => 'Loan', 'type' => 'liability'],
+            ['name' => 'Reserve & Surplus', 'type' => 'liability'],
+            ['name' => 'Profit to till date', 'type' => 'liability'],
+            ['name' => 'Tax Payable', 'type' => 'liability'],
+
+            ['name' => 'Student Fee', 'type' => 'income'],
+            ['name' => 'Indirect Income', 'type' => 'income'],
+
+            ['name' => 'Direct Expenses', 'type' => 'expense'],
+            ['name' => 'Indirect Expenses', 'type' => 'expense'],
+            ['name' => 'Fee Refund', 'type' => 'expense'],
+        ]);
     }
 }
