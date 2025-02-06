@@ -15,11 +15,15 @@ class Payment extends Model
         'type',
         'remarks',
         'amount',
-        'payedBy',
         'batchId',
         'paymentModeId',
+        'ledgerId',
+        'subLedgerId',
         'blockId',
-        'recievedBy'
+        'recievedBy',
+        'transactionBy',
+        'dueAmount',
+        'studentId',
     ];
 
     // Specify the primary key for the model
@@ -41,6 +45,11 @@ class Payment extends Model
         return $this->belongsTo(User::class, 'transaction_by');
     }
 
+    public function student()
+    {
+        return $this->belongsTo(User::class, 'studentId');
+    }
+
     public function batch()
     {
         return $this->belongsTo(Batch::class, 'batchId');
@@ -59,5 +68,10 @@ class Payment extends Model
     public function ledger()
     {
         return $this->belongsTo(Ledger::class, 'ledgerId');
+    }
+
+    public function subLedger()
+    {
+        return $this->belongsTo(SubLedger::class, 'subLedgerId');
     }
 }

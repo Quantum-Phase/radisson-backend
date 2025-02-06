@@ -19,14 +19,14 @@ class PaymentController extends Controller
     {
         $limit = (int)$request->limit;
         $search = $request->search;
-        $payed_by = $request->payerId;
+        $studentId = $request->payerId;
 
         $user = auth()->user();
 
         $types = is_string($request->query('type')) ? explode(',', $request->query('type')) : [$request->query('type')];
 
         $payments = Payment::with([
-            'payedBy:userId,name,phoneNo',
+            'student:userId,name,phoneNo',
             'transactionBy:userId,name',
             'batch' => function ($query) {
                 $query->select('batchId', 'name', 'courseId');
@@ -42,15 +42,15 @@ class PaymentController extends Controller
             },
             'block'
         ])
-            ->when($payed_by, function ($query) use ($payed_by) {
-                $query->where('payed_by', $payed_by);
+            ->when($studentId, function ($query) use ($studentId) {
+                $query->where('studentId', $studentId);
             })
             ->when($types, function ($query) use ($types) {
                 return $query->whereIn('type', $types);
             })
             ->where(function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%')
-                    ->orWhereHas('payedBy', function ($query) use ($search) {
+                    ->orWhereHas('student', function ($query) use ($search) {
                         $query->where('name', 'like', '%' . $search . '%');
                     })
                     ->orWhereHas('batch', function ($query) use ($search) {
@@ -83,12 +83,14 @@ class PaymentController extends Controller
     public function create(Request $request)
     {
         $request->validate([
-            'amount' => 'required',
-            'paymentModeId' => 'required',
+            'amount' => 'required|numeric',
             'name' => 'required|string',
             'type' => 'required|string',
-            'actionType' => 'required|string',
             'blockId' => 'required|exists:blocks,blockId',
+            'ledgerId' => 'required|exists:ledgers,ledgerId',
+            'subLedgerId' => 'required|exists:sub_ledgers,subLedgerId',
+            'paymentModeId' => 'required|exists:payment_modes,paymentModeId',
+            'remarks' => 'nullable|string',
         ]);
         $user = auth()->user();
 
@@ -98,58 +100,92 @@ class PaymentController extends Controller
 
         $payment = new Payment();
         $payment->amount = $request->amount;
-        $payment->payed_by = $request->payed_by;
+        $payment->studentId = $request->studentId;
         $payment->batchId = $request->batchId;
         $payment->ledgerId = $request->ledgerId;
+        $payment->subLedgerId = $request->subLedgerId;
         $payment->paymentModeId = $request->paymentModeId;
         $payment->blockId = $request->blockId;
         $payment->remarks = $request->remarks;
         $payment->name = $request->name;
         $payment->type = $request->type;
-        $payment->actionType = $request->actionType;
         $payment->transaction_by = $user->userId;
 
-        if ($request->type && $request->actionType && $request->batchId) {
-            $userFeeDetail = UserFeeDetail::where("userId", $request->payed_by)->where("batchId", $request->batchId)->first();
+        $ledger = Ledger::find($request->ledgerId);
+
+        if ($ledger->isStudentFeeLedger) {
+            $userFeeDetail = UserFeeDetail::where("userId", $request->studentId)->where("batchId", $request->batchId)->first();
 
             if (!$userFeeDetail) {
                 return response()->json(['message' => 'User Fee detail not found'], 404);
             }
 
-            if ($request->type === LedgerType::INCOME && $request->actionType === "fee") {
-                if ($userFeeDetail->remainingAmount < $request->amount) {
-                    return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 404);
-                }
-
-                $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
-
-                $payment->due_amount = $userFeeDetail->amountToBePaid -  $userFeeDetail->totalAmountPaid;
+            if ($userFeeDetail->remainingAmount < $request->amount) {
+                return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 404);
             }
 
-            if ($request->type === LedgerType::EXPENSE && $request->actionType === "refund") {
-                if ($userFeeDetail->refundAmount < $request->amount) {
-                    return response()->json(['message' => 'Paying amount cannot be greater than refund amount.'], 404);
-                }
-
-                $userFeeDetail->refundAmount = $userFeeDetail->refundAmount - $request->amount;
-            }
-
-            $payment->save();
+            $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
             $userFeeDetail->update();
         }
+
+        if ($ledger->isStudentRefundLedger) {
+            $userFeeDetail = UserFeeDetail::where("userId", $request->studentId)->where("batchId", $request->batchId)->first();
+
+            if (!$userFeeDetail) {
+                return response()->json(['message' => 'User Fee detail not found'], 404);
+            }
+
+            if ($userFeeDetail->refundRequestedAmount < $request->amount) {
+                return response()->json(['message' => 'Paying amount cannot be greater than refund amount.'], 404);
+            }
+
+            $userFeeDetail->refundedAmount = $userFeeDetail->refundedAmount + $request->amount;
+            $userFeeDetail->update();
+        }
+
+        $payment->save();
+
+        // if ($request->type && $request->actionType && $request->batchId) {
+        //     $userFeeDetail = UserFeeDetail::where("userId", $request->studentId)->where("batchId", $request->batchId)->first();
+
+        //     if (!$userFeeDetail) {
+        //         return response()->json(['message' => 'User Fee detail not found'], 404);
+        //     }
+
+        //     if ($request->type === LedgerType::INCOME && $request->actionType === "fee") {
+        //         if ($userFeeDetail->remainingAmount < $request->amount) {
+        //             return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 404);
+        //         }
+
+        //         $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
+
+        //         $payment->due_amount = $userFeeDetail->amountToBePaid -  $userFeeDetail->totalAmountPaid;
+        //     }
+
+        //     if ($request->type === LedgerType::EXPENSE && $request->actionType === "refund") {
+        //         if ($userFeeDetail->refundAmount < $request->amount) {
+        //             return response()->json(['message' => 'Paying amount cannot be greater than refund amount.'], 404);
+        //         }
+
+        //         $userFeeDetail->refundAmount = $userFeeDetail->refundAmount - $request->amount;
+        //     }
+
+        //     $payment->save();
+        //     $userFeeDetail->update();
+        // }
 
         // if ($request->type === LedgerType::INCOME && $request->batchId) {
         //     $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid + $request->amount;
 
         //     $payment->due_amount = $userFeeDetail->amountToBePaid -  $userFeeDetail->totalAmountPaid;
         // }
-        if ($request->type !== LedgerType::INCOME || !$request->batchId) {
-            $payment->save();
-        }
+        // if ($request->type !== LedgerType::INCOME || !$request->batchId) {
+        //     $payment->save();
+        // }
 
-        $ledger = Ledger::find($request->ledgerId);
-        $ledger->amount = $ledger->amount + $request->amount;
-        $ledger->update();
+        // $ledger = Ledger::find($request->ledgerId);
+        // $ledger->amount = $ledger->amount + $request->amount;
+        // $ledger->update();
         // if ($request->type === LedgerType::INCOME && $request->payed_by) {
         //     $userFeeDetail->update();
         // }
@@ -299,28 +335,51 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Payment created_at date exceeds today\'s date'], 422);
         }
 
-        $userFeeDetail = UserFeeDetail::where("userId", $payment->payed_by)->where("batchId", $payment->batchId)->first();
+        $ledger = Ledger::find($payment->ledgerId);
 
-        if (!$userFeeDetail) {
-            return response()->json(['message' => 'User Fee detail not found'], 404);
-        }
+        if ($ledger->isStudentFeeLedger) {
+            $userFeeDetail = UserFeeDetail::where("userId", $payment->studentId)->where("batchId", $payment->batchId)->first();
 
-        if ($payment->actionType === "fee") {
+            if (!$userFeeDetail) {
+                return response()->json(['message' => 'User Fee detail not found'], 404);
+            }
+
             if (($userFeeDetail->remainingAmount + $payment->amount) < $request->amount) {
                 return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 422);
             }
             $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid - $payment->amount + $request->amount;
-            Log::info("totalAmountPaid" . $userFeeDetail->totalAmountPaid);
-            Log::info("amount" . $payment->amount);
-            Log::info("request amount" . $request->amount);
+            $userFeeDetail->update();
         }
 
-        if ($payment->actionType === "refund") {
-            if (($userFeeDetail->refundAmount + $payment->amount) < $request->amount) {
+        if ($ledger->isStudentRefundLedger) {
+            $userFeeDetail = UserFeeDetail::where("userId", $payment->studentId)->where("batchId", $payment->batchId)->first();
+
+            if (!$userFeeDetail) {
+                return response()->json(['message' => 'User Fee detail not found'], 404);
+            }
+
+            if (($userFeeDetail->refundedAmount + $request->amount) < $request->refundRequestedAmount) {
                 return response()->json(['message' => 'Paying amount cannot be greater than refund amount.'], 422);
             }
-            $userFeeDetail->refundAmount = $userFeeDetail->refundAmount - $payment->amount + $request->amount;
+            $userFeeDetail->refundedAmount = $userFeeDetail->refundedAmount + $request->amount;
+            $userFeeDetail->update();
         }
+        // if ($payment->actionType === "fee") {
+        //     if (($userFeeDetail->remainingAmount + $payment->amount) < $request->amount) {
+        //         return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 422);
+        //     }
+        //     $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid - $payment->amount + $request->amount;
+        //     Log::info("totalAmountPaid" . $userFeeDetail->totalAmountPaid);
+        //     Log::info("amount" . $payment->amount);
+        //     Log::info("request amount" . $request->amount);
+        // }
+
+        // if ($payment->actionType === "refund") {
+        //     if (($userFeeDetail->refundAmount + $payment->amount) < $request->amount) {
+        //         return response()->json(['message' => 'Paying amount cannot be greater than refund amount.'], 422);
+        //     }
+        //     $userFeeDetail->refundAmount = $userFeeDetail->refundAmount - $payment->amount + $request->amount;
+        // }
 
         $payment->amount = $request->amount;
         $payment->paymentModeId = $request->paymentModeId;
@@ -328,7 +387,6 @@ class PaymentController extends Controller
         $payment->blockId = $request->blockId;
         $payment->remarks = $request->remarks;
 
-        $userFeeDetail->update();
         $payment->update();
         return response()->json('Payment updated successfully');
     }

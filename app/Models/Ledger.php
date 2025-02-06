@@ -13,10 +13,9 @@ class Ledger extends Model
     protected $fillable = [
         'ledgerId',
         'name',
-        'isDefaultIncome',
-        'type',
-        'totalAmoun',
-        'openingBalance'
+        'ledgerTypeId',
+        'isStudentFeeLedger',
+        'isStudentRefundLedger',
     ];
 
     // Specify the primary key for the model
@@ -32,4 +31,14 @@ class Ledger extends Model
     {
         return $this->hasMany(Payment::class, 'ledgerId', 'ledgerId');
     }
+
+    public function ledgerType()
+    {
+        return $this->belongsTo(LedgerType::class, 'ledgerTypeId', 'ledgerTypeId');
+    }
+
+    protected $casts = [
+        'isStudentFeeLedger' => 'boolean',
+        'isStudentRefundLedger' => 'boolean',
+    ];
 }

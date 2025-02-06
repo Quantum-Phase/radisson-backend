@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payment_modes', function (Blueprint $table) {
-            $table->id('paymentModeId');
+        Schema::create('sub_ledgers', function (Blueprint $table) {
+            $table->id('subLedgerId');
             $table->string('name')->nullable(false);
-            $table->boolean('isDefault')->default(false);
+
+            $table->unsignedBigInteger('ledgerId');
+            $table->foreign('ledgerId')->references('ledgerId')->on('ledgers')->onDelete('cascade');
+
             $table->timestamps();
             $table->softDeletes();
         });
@@ -25,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('payment_modes');
+        Schema::dropIfExists('sub_ledgers');
     }
 };

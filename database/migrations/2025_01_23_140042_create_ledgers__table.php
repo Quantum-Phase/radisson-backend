@@ -14,10 +14,11 @@ return new class extends Migration
         Schema::create('ledgers', function (Blueprint $table) {
             $table->id('ledgerId');
             $table->string('name')->nullable(false);
-            $table->boolean('isDefaultIncome')->default(false);
-            $table->enum('type', ['income', 'expense', 'liability', 'assets'])->nullable(false);
-            $table->integer('amount')->nullable(false)->default(0);
-            $table->integer('openingBalance')->nullable(false)->default(0);
+            $table->boolean('isStudentFeeLedger')->default(false);
+            $table->boolean('isStudentRefundLedger')->default(false);
+
+            $table->unsignedBigInteger('ledgerTypeId');
+            $table->foreign('ledgerTypeId')->references('ledgerTypeId')->on('ledger_types')->onDelete('cascade');
 
             $table->timestamps();
             $table->softDeletes();

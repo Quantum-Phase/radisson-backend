@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LedgerType;
 use Illuminate\Http\Request;
 
 class LedgerTypeController extends Controller
@@ -9,56 +10,27 @@ class LedgerTypeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function getAll(Request $request)
     {
-        //
-    }
+        $limit = (int)$request->limit;
+        $type = $request->type;
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
+        $results = LedgerType::select(
+            'ledgerTypeId',
+            'name',
+            'type',
+        )
+            ->orderBy('created_at', 'desc')
+            ->when($type, function ($query) use ($type) {
+                $query->where('type', "=", $type);
+            });
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        if ($request->has('limit')) {
+            $results = $results->paginate($limit);
+        } else {
+            $results = $results->get();
+        }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return response()->json($results);
     }
 }

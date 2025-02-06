@@ -20,6 +20,9 @@ return new class extends Migration
             $table->unsignedBigInteger('ledgerId')->nullable();
             $table->foreign('ledgerId')->references('ledgerId')->on('ledgers')->onDelete('cascade');
 
+            $table->unsignedBigInteger('subLedgerId')->nullable();
+            $table->foreign('subLedgerId')->references('subLedgerId')->on('sub_ledgers')->onDelete('cascade');
+
             $table->unsignedBigInteger('batchId')->nullable();
             $table->foreign('batchId')->references('batchId')->on('batches')->onDelete('cascade');
 
@@ -31,8 +34,11 @@ return new class extends Migration
 
             $table->string('remarks')->nullable();
 
-            $table->foreignId('payed_by')->nullable();
-            $table->foreignId('transaction_by')->nullable(false);
+            $table->unsignedBigInteger('studentId')->nullable();
+            $table->foreign('studentId')->references('userId')->on('users')->onDelete('cascade');
+
+            $table->unsignedBigInteger('transaction_by')->nullable(false);
+            $table->foreign('transaction_by')->references('userId')->on('users')->onDelete('cascade');
 
             $table->integer('due_amount')->nullable(false)->default(0);
 

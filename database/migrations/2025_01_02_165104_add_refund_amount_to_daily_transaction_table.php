@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('user_fee_details', function (Blueprint $table) {
-            $table->integer('refundAmount')->default(0);
+            $table->integer('refundRequestedAmount')->default(0);
+            $table->integer('refundedAmount')->default(0);
         });
     }
 
@@ -22,7 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('user_fee_details', function (Blueprint $table) {
-            $table->dropColumn('refundAmount');
+            $table->dropColumn('refundRequestedAmount');
+            $table->dropColumn('refundedAmount');
         });
     }
 };

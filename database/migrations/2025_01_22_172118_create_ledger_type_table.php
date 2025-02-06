@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ledger_type', function (Blueprint $table) {
+        Schema::create('ledger_types', function (Blueprint $table) {
             $table->id('ledgerTypeId');
             $table->string('name')->nullable(false);
             $table->enum('type', ['income', 'expense', 'liability', 'assets'])->nullable(false);
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ledger_type');
+        Schema::dropIfExists('ledger_types');
     }
 };

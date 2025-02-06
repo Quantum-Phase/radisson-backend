@@ -19,17 +19,23 @@ class LedgerController extends Controller
         $results = Ledger::select(
             'ledgerId',
             'name',
-            'type',
-            'isDefaultIncome',
+            'ledgerTypeId',
+            'isStudentFeeLedger',
+            'isStudentRefundLedger',
         )
+            ->with(['ledgerType' => function ($query) {
+                $query->select('ledgerTypeId', 'name', 'type');
+            }])
             ->orderBy('created_at', 'desc')
             ->when($type, function ($query) use ($type) {
-                $query->where('type', "=", $type);
+                $query->whereHas('ledgerType', function ($query) use ($type) {
+                    $query->where('type', $type);
+                });
             })
             ->when($search, function ($query, $search) {
                 return $query->where(function ($subquery) use ($search) {
                     $subquery->where('name', 'like', "%$search%")
-                        ->orWhere('type', 'like', "%$search%");
+                        ->orWhere('ledgerTypeId', 'like', "%$search%");
                 });
             });
 
@@ -39,11 +45,6 @@ class LedgerController extends Controller
             $results = $results->get();
         }
 
-        // Convert isDefaultIncome to boolean
-        $results->transform(function ($item) {
-            $item->isDefaultIncome = (bool)$item->isDefaultIncome;
-            return $item;
-        });
         return response()->json($results);
     }
 
@@ -58,7 +59,7 @@ class LedgerController extends Controller
                 'string',
                 'max:255',
             ],
-            'type' => 'required',
+            'ledgerTypeId' => 'required',
         ]);
 
         $ledgerExists = Ledger::where('name', $request->name)
@@ -70,7 +71,7 @@ class LedgerController extends Controller
 
         $company = new Ledger();
         $company->name = $request->name;
-        $company->type = $request->type;
+        $company->ledgerTypeId = $request->ledgerTypeId;
 
         $company->save();
 
@@ -101,7 +102,7 @@ class LedgerController extends Controller
                 'string',
                 'max:255',
             ],
-            'type' => 'required',
+            'ledgerTypeId' => 'required',
         ]);
 
         $ledgerExists = Ledger::where('name', $request->name)
@@ -113,8 +114,13 @@ class LedgerController extends Controller
         }
 
         $ledger = Ledger::find($ledgerId);
+
+        if ($ledger->isRelatedToStudent) {
+            return response()->json(['message' => 'Ledger is related to student, cannot be updated'], 422);
+        }
+
         $ledger->name = $request->name;
-        $ledger->type = $request->type;
+        $ledger->ledgerTypeId = $request->ledgerTypeId;
 
         $ledger->update();
 
@@ -131,8 +137,16 @@ class LedgerController extends Controller
             return response()->json(['message' => 'Ledger not found'], 404);
         }
 
+        if ($ledger->isRelatedToStudent) {
+            return response()->json(['message' => 'Ledger is related to student, cannot be deleted'], 422);
+        }
+
         if ($ledger->payments()->exists()) {
             return response()->json(['message' => 'Ledger has been assigned to payments, cannot be deleted'], 422);
+        }
+
+        if ($ledger->subLedgers()->exists()) {
+            return response()->json(['message' => 'Ledger has been assigned to subledgers, cannot be deleted'], 422);
         }
 
         $ledger->delete(); // or $ledger->forceDelete(); if you want to permanently delete

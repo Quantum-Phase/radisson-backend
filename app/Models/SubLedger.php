@@ -6,22 +6,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class UserFeeDetail extends Model
+class SubLedger extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'userId',
-        'batchId',
-        'amountToBePaid',
-        'totalAmountPaid',
-        'remainingAmount',
-        'refundRequestedAmount',
-        'refundedAmount'
+        'subLedgerId',
+        'name',
+        'ledgerId',
     ];
 
     // Specify the primary key for the model
-    protected $primaryKey = 'userFeeDetailId'; // Custom primary key
+    protected $primaryKey = 'subLedgerId'; // Custom primary key
 
     // Set to true if primary key is incrementing (default behavior)
     public $incrementing = true;
@@ -29,14 +25,8 @@ class UserFeeDetail extends Model
     // Set to false if primary key is not an integer
     protected $keyType = 'int'; // or 'string' if using a non-integer key
 
-
-    public function user()
+    public function ledger()
     {
-        return $this->belongsTo(User::class, 'userId');
-    }
-
-    public function batch()
-    {
-        return $this->belongsTo(Batch::class, 'batchId');
+        return $this->belongsTo(Ledger::class, 'ledgerId', 'ledgerId');
     }
 }

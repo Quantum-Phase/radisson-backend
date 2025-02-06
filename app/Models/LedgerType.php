@@ -6,13 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Ledger extends Model
+class LedgerType extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'ledgerTypeId',
-        'name'
+        'name',
+        'type'
     ];
 
     // Specify the primary key for the model

@@ -218,7 +218,8 @@ class BatchController extends Controller
                 'amountToBePaid' => $userFeeDetails->sum('amountToBePaid') ?? null,
                 'totalAmountPaid' => $userFeeDetails->sum('totalAmountPaid') ?? null,
                 'remainingAmount' => $userFeeDetails->sum('remainingAmount') ?? null,
-                'refundAmount' => $userFeeDetails->sum('refundAmount') ?? null,
+                'refundRequestedAmount' => $userFeeDetails->sum('refundRequestedAmount') ?? null,
+                'refundedAmount' => $userFeeDetails->sum('refundedAmount') ?? null,
             ];
         });
 
@@ -363,10 +364,11 @@ class BatchController extends Controller
 
             // Calculate the remaining amount and refund amount
             $remainingAmount = $amountToBePaid - $userFeeDetailForOldBatch->totalAmountPaid;
-            $refundAmount = 0;
+            $refundRequestedAmount = 0;
+            $refundedAmount = 0;
 
             if ($remainingAmount < 0) {
-                $refundAmount = abs($remainingAmount); // Use absolute value for refund
+                $refundRequestedAmount = abs($remainingAmount); // Use absolute value for refund
                 $remainingAmount = 0;
             }
 
@@ -377,7 +379,8 @@ class BatchController extends Controller
                 'amountToBePaid' => $amountToBePaid,
                 'totalAmountPaid' => $userFeeDetailForOldBatch->totalAmountPaid,
                 'remainingAmount' => $remainingAmount,
-                'refundAmount' => $refundAmount,
+                'refundRequestedAmount' => $refundRequestedAmount,
+                'refundedAmount' => $refundedAmount,
             ]);
 
             $userFeeDetailForOldBatch->deleted_at = now();
@@ -393,5 +396,29 @@ class BatchController extends Controller
             Log::error('Error transferring student: ' . $e->getMessage());
             return response()->json(['message' => 'Failed to transfer student: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function refundRequest(Request $request)
+    {
+        $request->validate([
+            'studentId' => 'required|exists:users,userId',
+            'batchId' => 'required|exists:batches,batchId',
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        $userFeeDetail = UserFeeDetail::where('userId', $request->studentId)->where('batchId', $request->batchId)->first();
+
+        if (!$userFeeDetail) {
+            return response()->json(['message' => 'User fee details not found'], 404);
+        }
+
+        if ($userFeeDetail->totalAmountPaid < $request->amount) {
+            return response()->json(['message' => 'Amount cannot be greater than the total amount paid'], 400);
+        }
+
+        $userFeeDetail->refundRequestedAmount = $userFeeDetail->refundRequestedAmount + $request->amount;
+        $userFeeDetail->save();
+
+        return response()->json(['message' => 'Refund request submitted successfully'], 200);
     }
 }

@@ -2,11 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-
 
 class UserSeeder extends Seeder
 {
@@ -30,19 +28,7 @@ class UserSeeder extends Seeder
             ['name' => 'Block B'],
         ]);
 
-        DB::table('ledgers')->insert([
-            'name' => 'Student Payment',
-            'type' => "income",
-            'isDefaultIncome' => true
-        ]);
-
-        DB::table('ledgers')->insert([
-            'name' => 'Student Payment',
-            'type' => "income",
-            'isDefaultIncome' => true
-        ]);
-
-        DB::table('ledger_type')->insert([
+        DB::table('ledger_types')->insert([
             ['name' => 'Bank Accounts', 'type' =>  'assets'],
             ['name' => 'Cash', 'type' => 'assets'],
             ['name' => 'Current Assets', 'type' => 'assets'],
@@ -56,8 +42,6 @@ class UserSeeder extends Seeder
             ['name' => 'Payable', 'type' => 'liability'],
             ['name' => 'Loan', 'type' => 'liability'],
             ['name' => 'Reserve & Surplus', 'type' => 'liability'],
-            ['name' => 'Loan', 'type' => 'liability'],
-            ['name' => 'Reserve & Surplus', 'type' => 'liability'],
             ['name' => 'Profit to till date', 'type' => 'liability'],
             ['name' => 'Tax Payable', 'type' => 'liability'],
 
@@ -67,6 +51,30 @@ class UserSeeder extends Seeder
             ['name' => 'Direct Expenses', 'type' => 'expense'],
             ['name' => 'Indirect Expenses', 'type' => 'expense'],
             ['name' => 'Fee Refund', 'type' => 'expense'],
+        ]);
+
+        DB::table('payment_modes')->insert([
+            ['name' => 'Cash', 'isDefault' => true],
+        ]);
+
+        // Fetch the ID of 'Student Fee' from the LedgerType table
+        $ledgerTypeId = DB::table('ledger_types')->where('name', 'Student Fee')->value('ledgerTypeId');
+
+        // Insert into the Ledger table
+        DB::table('ledgers')->insert([
+            'name' => 'Student Fee',
+            'ledgerTypeId' => $ledgerTypeId,
+            'isStudentFeeLedger' => true
+        ]);
+
+        // Fetch the ID of 'Student Fee' from the LedgerType table
+        $ledgerTypeId = DB::table('ledger_types')->where('name', 'Fee Refund')->value('ledgerTypeId');
+
+        // Insert into the Ledger table
+        DB::table('ledgers')->insert([
+            'name' => 'Student Refund',
+            'ledgerTypeId' => $ledgerTypeId,
+            'isStudentRefundLedger' => true
         ]);
     }
 }

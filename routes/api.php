@@ -12,8 +12,10 @@ use App\Http\Controllers\DailyTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\LedgerController;
+use App\Http\Controllers\LedgerTypeController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentModeController;
+use App\Http\Controllers\SubLedgerController;
 use App\Http\Controllers\UserFeeDetailController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -88,12 +90,22 @@ Route::group([
     Route::put('/job/{workId}', [JobController::class, 'updateJob'])->name('UpdateJob');
     Route::get('/searchjob', [JobController::class, 'searchJob'])->name('SearchJob');
 
+    //Route Ledger Type
+    Route::get('/ledger-type', [LedgerTypeController::class, 'getAll'])->name('getAll');
+
     //Route Ledger
     Route::get('/ledger', [LedgerController::class, 'getAll'])->name('getAll');
     Route::post('/ledger', [LedgerController::class, 'createNew'])->name('createNew');
     Route::delete('/ledger/{ledgerId}', [LedgerController::class, 'destroy'])->name('destroy');
     Route::get('/ledger/{ledgerId}', [LedgerController::class, 'getSingle'])->name('getSingle');
     Route::put('/ledger/{ledgerId}', [LedgerController::class, 'update'])->name('update');
+
+    //Route Sub Ledger
+    Route::get('/sub-ledger', [SubLedgerController::class, 'getAll'])->name('getAll');
+    Route::post('/sub-ledger', [SubLedgerController::class, 'createNew'])->name('createNew');
+    Route::delete('/sub-ledger/{subLedgerId}', [SubLedgerController::class, 'destroy'])->name('destroy');
+    Route::get('/sub-ledger/{subLedgerId}', [SubLedgerController::class, 'getSingle'])->name('getSingle');
+    Route::put('/sub-ledger/{subLedgerId}', [SubLedgerController::class, 'update'])->name('update');
 
     //Route Batch
     Route::get('/batch', [BatchController::class, 'showBatch'])->name("ShowBatch");
@@ -106,6 +118,7 @@ Route::group([
     Route::get('/batch/students/{batchId}', [BatchController::class, 'studentsByBatch'])->name('StudentsByBatch');
     Route::delete('/batches/{batchId}/students/{studentId}', [BatchController::class, 'deleteStudentFromBatch'])->name('StudentdeleteStudentFromBatchsByBatch');
     Route::post('/batch/transfer-student', [BatchController::class, 'transferStudent'])->name('transferStudent');
+    Route::post('/batch/refund-request', [BatchController::class, 'refundRequest'])->name('refundRequest');
 
     //Route Block
     Route::get('/block', [BlockController::class, 'showBlock'])->name("ShowBlock");
