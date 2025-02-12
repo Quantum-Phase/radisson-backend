@@ -67,6 +67,7 @@ class DailyTransactionController extends Controller
 
             if ($payment->type === LedgerType::INCOME) {
                 $result[$payment->blockId]['totalCredit'] += $payment->amount;
+                $totalCredit += $payment->amount;  // Add to overall total
                 if (!isset($result[$payment->blockId]['credit'][$payment->ledgerId])) {
                     $ledgerName = Ledger::find($payment->ledgerId)->name ?? 'Unknown Ledger'; // Handle if ledger is not found
                     $result[$payment->blockId]['credit'][$payment->ledgerId] = [
@@ -78,6 +79,7 @@ class DailyTransactionController extends Controller
                 $result[$payment->blockId]['credit'][$payment->ledgerId]['amount'] += $payment->amount;
             } elseif ($payment->type === LedgerType::EXPENSE) {
                 $result[$payment->blockId]['totalDebit'] += $payment->amount;
+                $totalDebit += $payment->amount;  // Add to overall total
                 if (!isset($result[$payment->blockId]['debit'][$payment->ledgerId])) {
                     $ledgerName = Ledger::find($payment->ledgerId)->name ?? 'Unknown Ledger'; // Handle if ledger is not found
                     $result[$payment->blockId]['debit'][$payment->ledgerId] = [

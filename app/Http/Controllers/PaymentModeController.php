@@ -22,6 +22,7 @@ class PaymentModeController extends Controller
 
         if ($search) {
             $results = $results->where('name', 'like', "%$search%");
+            $results = $results->orWhere('type', 'like', "%$search%");
         }
 
         if ($request->has('limit')) {
@@ -43,6 +44,11 @@ class PaymentModeController extends Controller
                 'string',
                 'max:255',
             ],
+            'type' => [
+                'required',
+                'string',
+                'max:255',
+            ],
         ]);
 
         $paymentModeExists = PaymentMode::where('name', $request->name)
@@ -54,6 +60,7 @@ class PaymentModeController extends Controller
 
         $paymentMode = new PaymentMode();
         $paymentMode->name = $request->name;
+        $paymentMode->type = $request->type;
 
         $paymentMode->save();
 
@@ -71,6 +78,11 @@ class PaymentModeController extends Controller
                 'string',
                 'max:255',
             ],
+            'type' => [
+                'required',
+                'string',
+                'max:255',
+            ],
         ]);
 
         $paymentModeExists = PaymentMode::where('name', $request->name)
@@ -83,7 +95,7 @@ class PaymentModeController extends Controller
 
         $paymentMode = PaymentMode::find($paymentModeId);
         $paymentMode->name = $request->name;
-
+        $paymentMode->type = $request->type;
         $paymentMode->update();
 
         return response()->json('Payment Mode Updated Sucessfully');

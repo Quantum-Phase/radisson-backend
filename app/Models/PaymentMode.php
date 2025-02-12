@@ -13,7 +13,7 @@ class PaymentMode extends Model
     protected $fillable = [
         'paymentModeId',
         'name',
-        'isDefault'
+        'type'
     ];
 
     // Specify the primary key for the model

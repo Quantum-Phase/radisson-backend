@@ -48,6 +48,9 @@ class BatchController extends Controller
             'batches.courseId',
             'batches.mentorId',
         )
+            ->withCount(['studentBatches' => function ($query) {
+                $query->whereNull('deleted_at');
+            }])
             ->with('course')
             ->with(['mentor' => function ($query) {
                 $query->select('userId', 'name');
@@ -134,6 +137,11 @@ class BatchController extends Controller
             $batch_data->disable_course = true;
         }
 
+        // Add student count
+        $batch_data->total_students = StudentBatch::where('batchId', $batchId)
+            ->whereNull('deleted_at')
+            ->count();
+
         return response()->json($batch_data);
     }
 
@@ -176,7 +184,8 @@ class BatchController extends Controller
         $feeStatus = $request->feeStatus;
 
         $students = StudentBatch::where('batchId', $batchId)
-            ->orderBy('created_at', 'desc')
+            ->join('users', 'student_batches.userId', '=', 'users.userId')
+            ->orderBy('users.name', 'asc')
             ->with('user', 'user.userFeeDetail') // eager load the user relationship
             ->when($search, function ($query) use ($search) {
                 $query->whereHas('user', function ($subquery) use ($search) {

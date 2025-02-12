@@ -53,10 +53,6 @@ class UserSeeder extends Seeder
             ['name' => 'Fee Refund', 'type' => 'expense'],
         ]);
 
-        DB::table('payment_modes')->insert([
-            ['name' => 'Cash', 'isDefault' => true],
-        ]);
-
         // Fetch the ID of 'Student Fee' from the LedgerType table
         $ledgerTypeId = DB::table('ledger_types')->where('name', 'Student Fee')->value('ledgerTypeId');
 

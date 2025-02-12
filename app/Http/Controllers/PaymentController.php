@@ -52,6 +52,7 @@ class PaymentController extends Controller
                 $query->where('name', 'like', '%' . $search . '%')
                     ->orWhereHas('student', function ($query) use ($search) {
                         $query->where('name', 'like', '%' . $search . '%');
+                        $query->orWhere('phoneNo', 'like', '%' . $search . '%');
                     })
                     ->orWhereHas('batch', function ($query) use ($search) {
                         $query->where('name', 'like', '%' . $search . '%');
