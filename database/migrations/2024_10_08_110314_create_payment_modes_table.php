@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('payment_modes', function (Blueprint $table) {
             $table->id('paymentModeId');
             $table->string('name')->nullable(false);
-            $table->boolean('isDefault')->default(false);
+            $table->enum('type', ['cash', 'bank'])->nullable(false);
             $table->timestamps();
             $table->softDeletes();
         });
