@@ -16,7 +16,8 @@ class Course extends Model
         'name',
         'totalFee',
         'duration_unit',
-        'duration'
+        'duration',
+        'totalHours'
     ];
 
     // Specify the primary key for the model

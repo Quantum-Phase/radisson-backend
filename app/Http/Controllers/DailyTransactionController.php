@@ -17,8 +17,11 @@ class DailyTransactionController extends Controller
 
         // Initialize totals
         $openingBalance = 0;
+        $openingCashBalance = 0;
         $totalCredit = 0;
         $totalDebit = 0;
+        $totalCashDebit = 0;
+        $totalCashCredit = 0;
         $result = [];
 
         $user = auth()->user();
@@ -30,6 +33,7 @@ class DailyTransactionController extends Controller
         $openingblnc = DB::table('daily_transactions')->whereDate('created_at', $date)->first();
         if ($openingblnc) {
             $openingBalance = $openingblnc->opening_balance;
+            $openingCashBalance = $openingblnc->opening_cash_balance;
         }
 
         // Fetch payments made today
@@ -43,12 +47,33 @@ class DailyTransactionController extends Controller
             $paymentsQuery->orderBy('blockId', 'asc');
         }
 
+        // Add transaction by filter if provided
+        if ($transactionBy) {
+            $paymentsQuery->where('transaction_by', $transactionBy);
+        }
+
+        // Get all payments
         $payments = $paymentsQuery
             ->orderBy('created_at', 'desc')
-            ->when($transactionBy, function ($query) use ($transactionBy) {
-                $query->where('transaction_by', $transactionBy);
+            ->with(['student', 'paymentMode'])
+            ->get(['paymentId', 'type', 'amount', 'blockId', 'ledgerId', 'studentId', 'paymentModeId']);
+
+        // Calculate cash totals using collection methods
+        $totalCashDebit = $payments
+            ->filter(function ($payment) {
+                return $payment->paymentMode
+                    && $payment->paymentMode->type === 'cash'
+                    && $payment->type === LedgerType::EXPENSE;
             })
-            ->get(['paymentId', 'name', 'type', 'amount', 'blockId', 'ledgerId']);
+            ->sum('amount');
+
+        $totalCashCredit = $payments
+            ->filter(function ($payment) {
+                return $payment->paymentMode
+                    && $payment->paymentMode->type === 'cash'
+                    && $payment->type === LedgerType::INCOME;
+            })
+            ->sum('amount');
 
         // Process payments and group by block name and type
         foreach ($payments as $payment) {
@@ -71,24 +96,55 @@ class DailyTransactionController extends Controller
                 if (!isset($result[$payment->blockId]['credit'][$payment->ledgerId])) {
                     $ledgerName = Ledger::find($payment->ledgerId)->name ?? 'Unknown Ledger'; // Handle if ledger is not found
                     $result[$payment->blockId]['credit'][$payment->ledgerId] = [
-                        'ledgerId' => $payment->ledgerId,
+                        'id' => $payment->ledgerId,
                         'name' => $ledgerName,
                         'amount' => 0,
+                        'transactions' => [] // Add array to store individual transactions
                     ];
                 }
                 $result[$payment->blockId]['credit'][$payment->ledgerId]['amount'] += $payment->amount;
+
+                // Add individual transaction details
+                $result[$payment->blockId]['credit'][$payment->ledgerId]['transactions'][] = [
+                    'id' => $payment->paymentId,
+                    'amount' => $payment->amount,
+                    'name' => $payment->student ? $payment->student->name : 'N/A',
+                    'paymentMode' => $payment->paymentMode ? $payment->paymentMode->name : 'N/A'
+                ];
             } elseif ($payment->type === LedgerType::EXPENSE) {
                 $result[$payment->blockId]['totalDebit'] += $payment->amount;
                 $totalDebit += $payment->amount;  // Add to overall total
-                if (!isset($result[$payment->blockId]['debit'][$payment->ledgerId])) {
-                    $ledgerName = Ledger::find($payment->ledgerId)->name ?? 'Unknown Ledger'; // Handle if ledger is not found
-                    $result[$payment->blockId]['debit'][$payment->ledgerId] = [
-                        'ledgerId' => $payment->ledgerId,
-                        'name' => $ledgerName,
+
+                // Group by payment mode for debit transactions
+                $paymentModeId = $payment->paymentModeId;
+                $paymentMode = $payment->paymentMode;
+
+                // Check if it's a cash payment
+                if ($paymentMode && $paymentMode->type === 'cash') {
+                    $paymentModeId = 'cash'; // Use a fixed key for all cash transactions
+                    $paymentModeName = 'Cash';
+                } else {
+                    $paymentModeName = $paymentMode->name ?? 'Unknown Payment Mode';
+                }
+
+                if (!isset($result[$payment->blockId]['debit'][$paymentModeId])) {
+                    $result[$payment->blockId]['debit'][$paymentModeId] = [
+                        'id' => $paymentModeId,
+                        'name' => $paymentModeName,
                         'amount' => 0,
+                        'transactions' => [] // Only store transactions for non-cash payments
                     ];
                 }
-                $result[$payment->blockId]['debit'][$payment->ledgerId]['amount'] += $payment->amount;
+
+                // Add amount to payment mode total
+                $result[$payment->blockId]['debit'][$paymentModeId]['amount'] += $payment->amount;
+
+                // Add transaction details for all payments (cash and non-cash)
+                $result[$payment->blockId]['debit'][$paymentModeId]['transactions'][] = [
+                    'id' => $payment->ledgerId,
+                    'name' => Ledger::find($payment->ledgerId)->name ?? 'Unknown Ledger',
+                    'amount' => $payment->amount,
+                ];
             }
         }
 
@@ -104,7 +160,7 @@ class DailyTransactionController extends Controller
                 ],
                 'debit' => [
                     'total' => $data['totalDebit'],
-                    'payments' => array_values($data['debit']),
+                    'payments' => array_values($data['debit']), // Now grouped by payment mode
                 ],
             ];
         }
@@ -113,8 +169,11 @@ class DailyTransactionController extends Controller
         // Return results or pass them to a view
         return response()->json([
             'openingBalance' => $openingBalance,
+            'openingCashBalance' => $openingCashBalance,
             'totalCredit' => $totalCredit,
             'totalDebit' => $totalDebit,
+            'totalCashDebit' => $totalCashDebit,
+            'totalCashCredit' => $totalCashCredit,
             'data' => $finalResult,
             'date' => $date
         ]);

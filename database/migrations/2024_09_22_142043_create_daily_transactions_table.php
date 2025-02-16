@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->integer('opening_balance');
+            $table->integer('opening_cash_balance');
             $table->integer('total_credit');
             $table->integer('total_debit');
         });

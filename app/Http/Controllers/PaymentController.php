@@ -8,7 +8,6 @@ use App\Models\Payment;
 use App\Models\UserFeeDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -34,6 +33,9 @@ class PaymentController extends Controller
             'ledger' => function ($query) {
                 $query->select('ledgerId', 'name');
             },
+            'subLedger' => function ($query) {
+                $query->select('subLedgerId', 'name');
+            },
             'batch.course' => function ($query) {
                 $query->select('courseId', 'name');
             },
@@ -49,11 +51,10 @@ class PaymentController extends Controller
                 return $query->whereIn('type', $types);
             })
             ->where(function ($query) use ($search) {
-                $query->where('name', 'like', '%' . $search . '%')
-                    ->orWhereHas('student', function ($query) use ($search) {
-                        $query->where('name', 'like', '%' . $search . '%');
-                        $query->orWhere('phoneNo', 'like', '%' . $search . '%');
-                    })
+                $query->whereHas('student', function ($query) use ($search) {
+                    $query->where('name', 'like', '%' . $search . '%');
+                    $query->orWhere('phoneNo', 'like', '%' . $search . '%');
+                })
                     ->orWhereHas('batch', function ($query) use ($search) {
                         $query->where('name', 'like', '%' . $search . '%');
                     })
@@ -85,7 +86,6 @@ class PaymentController extends Controller
     {
         $request->validate([
             'amount' => 'required|numeric',
-            'name' => 'required|string',
             'type' => 'required|string',
             'blockId' => 'required|exists:blocks,blockId',
             'ledgerId' => 'required|exists:ledgers,ledgerId',
@@ -108,7 +108,6 @@ class PaymentController extends Controller
         $payment->paymentModeId = $request->paymentModeId;
         $payment->blockId = $request->blockId;
         $payment->remarks = $request->remarks;
-        $payment->name = $request->name;
         $payment->type = $request->type;
         $payment->transaction_by = $user->userId;
 
@@ -315,7 +314,6 @@ class PaymentController extends Controller
         $request->validate([
             'amount' => 'required',
             'paymentModeId' => 'required',
-            'name' => 'required|string',
             'blockId' => 'required|exists:blocks,blockId',
         ]);
 
@@ -365,26 +363,9 @@ class PaymentController extends Controller
             $userFeeDetail->refundedAmount = $userFeeDetail->refundedAmount + $request->amount;
             $userFeeDetail->update();
         }
-        // if ($payment->actionType === "fee") {
-        //     if (($userFeeDetail->remainingAmount + $payment->amount) < $request->amount) {
-        //         return response()->json(['message' => 'Paying amount cannot be greater than remaining amount.'], 422);
-        //     }
-        //     $userFeeDetail->totalAmountPaid = $userFeeDetail->totalAmountPaid - $payment->amount + $request->amount;
-        //     Log::info("totalAmountPaid" . $userFeeDetail->totalAmountPaid);
-        //     Log::info("amount" . $payment->amount);
-        //     Log::info("request amount" . $request->amount);
-        // }
-
-        // if ($payment->actionType === "refund") {
-        //     if (($userFeeDetail->refundAmount + $payment->amount) < $request->amount) {
-        //         return response()->json(['message' => 'Paying amount cannot be greater than refund amount.'], 422);
-        //     }
-        //     $userFeeDetail->refundAmount = $userFeeDetail->refundAmount - $payment->amount + $request->amount;
-        // }
 
         $payment->amount = $request->amount;
         $payment->paymentModeId = $request->paymentModeId;
-        $payment->name = $request->name;
         $payment->blockId = $request->blockId;
         $payment->remarks = $request->remarks;
 

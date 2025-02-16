@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('totalFee');
             $table->string('duration_unit');
             $table->integer('duration');
+            $table->integer('totalHours');
             $table->timestamps();
             $table->softDeletes();
         });
