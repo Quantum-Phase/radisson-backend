@@ -6,6 +6,7 @@ use App\Constants\LedgerType;
 use App\Models\Block;
 use App\Models\Ledger;
 use App\Models\Payment;
+use App\Models\SubLedger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class DailyTransactionController extends Controller
         }
 
         // Fetch payments made today
-        $paymentsQuery = Payment::whereDate('created_at', '=', $date);
+        $paymentsQuery = Payment::whereDate('created_at', '=', $date)->whereIn('type', [LedgerType::INCOME, LedgerType::EXPENSE]);
 
         if ($user->role !== 'superadmin') {
             $paymentsQuery->where('blockId', $user->blockId)->where('transaction_by', $user->userId);
@@ -55,8 +56,22 @@ class DailyTransactionController extends Controller
         // Get all payments
         $payments = $paymentsQuery
             ->orderBy('created_at', 'desc')
-            ->with(['student', 'paymentMode'])
-            ->get(['paymentId', 'type', 'amount', 'blockId', 'ledgerId', 'studentId', 'paymentModeId']);
+            ->with(['student', 'paymentMode', 'subLedger'])
+            ->get(['paymentId', 'type', 'amount', 'blockId', 'ledgerId', 'studentId', 'paymentModeId', 'subLedgerId']);
+
+        // If no payments found, return empty response
+        if ($payments->isEmpty()) {
+            return response()->json([
+                'openingBalance' => $openingBalance,
+                'openingCashBalance' => $openingCashBalance,
+                'totalCredit' => 0,
+                'totalDebit' => 0,
+                'totalCashDebit' => 0,
+                'totalCashCredit' => 0,
+                'data' => [],
+                'date' => $date
+            ]);
+        }
 
         // Calculate cash totals using collection methods
         $totalCashDebit = $payments
@@ -142,7 +157,7 @@ class DailyTransactionController extends Controller
                 // Add transaction details for all payments (cash and non-cash)
                 $result[$payment->blockId]['debit'][$paymentModeId]['transactions'][] = [
                     'id' => $payment->ledgerId,
-                    'name' => Ledger::find($payment->ledgerId)->name ?? 'Unknown Ledger',
+                    'name' => $payment->subLedger ? $payment->subLedger->name : 'Unknown Sub Ledger',
                     'amount' => $payment->amount,
                 ];
             }

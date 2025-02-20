@@ -213,6 +213,12 @@ class PaymentController extends Controller
             'ledger' => function ($query) {
                 $query->select('ledgerId', 'name');
             },
+            'subLedger' => function ($query) {
+                $query->select('subLedgerId', 'name');
+            },
+            'paymentMode' => function ($query) {
+                $query->select('paymentModeId', 'name');
+            },
         ])
             ->when($type, function ($query, $type) {
                 return $query->whereIn("payments.type", $type);
@@ -279,7 +285,8 @@ class PaymentController extends Controller
                         'payments' => $paymentsByLedger->map(function ($payment) {
                             return [
                                 'id' => $payment->paymentId,
-                                'name' => $payment->name,
+                                'name' => $payment->subLedger ? $payment->subLedger->name : 'Unknown Sub Ledger',
+                                'paymentMode' => $payment->paymentMode ? $payment->paymentMode->name : 'Unknown Payment Mode',
                                 'amount' => $payment->amount,
                             ];
                         })->toArray()
