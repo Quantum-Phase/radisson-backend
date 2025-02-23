@@ -8,10 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
-
-
-
-
+use Illuminate\Support\Facades\Log;
 
 class UpdateOpeningBalance extends Command
 {
@@ -42,7 +39,7 @@ class UpdateOpeningBalance extends Command
         // Retrieve the existing daily transaction record for today
         $dailyTransaction = DailyTransaction::whereDate('created_at', $today)->first();
 
-        if (!$dailyTransaction) {
+        if (!$dailyTransaction->exists()) {
             // Insert a new row for today's opening balance since no record exists
             DB::table('daily_transactions')->insert([
                 'opening_balance' => 0,
@@ -55,6 +52,9 @@ class UpdateOpeningBalance extends Command
 
             return;
         }
+
+        $openingBalance = $dailyTransaction->opening_balance;
+        $openingCashBalance = $dailyTransaction->opening_cash_balance;
 
         // Calculate today's total debit and credit
         $totalDebit = DB::table('payments')
