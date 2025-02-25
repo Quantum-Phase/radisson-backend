@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\BlockController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DailyTransactionController;
 use App\Http\Controllers\DashboardController;
@@ -145,4 +146,7 @@ Route::group([
     Route::get('/balance-sheet', [BalanceSheetController::class, 'index'])->name("index");
     Route::post('/balance-sheet', [BalanceSheetController::class, 'create'])->name('create');
     Route::get('/balance-sheet/financial-overview', [BalanceSheetController::class, 'getFinancialOverview'])->name('getFinancialOverview');
+
+    //Route Certificate
+    Route::post('/certificate/generate-pdf', [CertificateController::class, 'generatePDF'])->name('generatePDF');
 });
