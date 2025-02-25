@@ -313,17 +313,17 @@ class UserController extends Controller
 
         $data->update();
 
-        $studentsBatch = StudentBatch::where('userId', $userId)->first();
-        if ($studentsBatch) {
-            $studentsBatch->batchId = $request->batchId;
-            $studentsBatch->update();
-        } else {
+        // $studentsBatch = StudentBatch::where('userId', $userId)->first();
+        // if ($studentsBatch) {
+        //     $studentsBatch->batchId = $request->batchId;
+        //     $studentsBatch->update();
+        // } else {
 
-            $studentBatch = new StudentBatch;
-            $studentBatch->batchId = $request->batchId;
-            $studentBatch->userId = $userId;
-            $studentBatch->save();
-        }
+        //     $studentBatch = new StudentBatch;
+        //     $studentBatch->batchId = $request->batchId;
+        //     $studentBatch->userId = $userId;
+        //     $studentBatch->save();
+        // }
 
         return response()->json('User Updated Sucessfully');
     }

@@ -11,6 +11,21 @@ return [
     | in dompdf_config.inc.php. You can also override the entire config file.
     |
     */
+
+    'font_dir' => storage_path('fonts/'),
+    'font_cache' => storage_path('fonts/'),
+    'default_font' => 'lato',
+    'font_family' => [
+        'lato' => [
+            'R'  => 'Lato-Regular.ttf',
+            'B'  => 'Lato-Bold.ttf',
+            'BL' => 'Lato-Black.ttf',
+        ],
+        'aDlamDisplay' => [
+            'R' => 'ADLaMDisplay-Regular.ttf'
+        ]
+    ],
+
     'show_warnings' => false,   // Throw an Exception on warnings from dompdf
 
     'public_path' => null,  // Override the public path if needed
