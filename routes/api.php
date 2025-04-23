@@ -20,6 +20,7 @@ use App\Http\Controllers\SubLedgerController;
 use App\Http\Controllers\UserFeeDetailController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,4 +150,7 @@ Route::group([
 
     //Route Certificate
     Route::post('/certificate/generate-pdf', [CertificateController::class, 'generatePDF'])->name('generatePDF');
+
+    //Route Report
+    Route::get('/report', [ReportController::class, 'getReports'])->name('getReports');
 });

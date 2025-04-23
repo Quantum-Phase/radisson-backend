@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ledger;
+use App\Models\Payment;
+use App\Models\SubLedger;
+
 use Illuminate\Http\Request;
 
 class LedgerController extends Controller
@@ -153,4 +156,68 @@ class LedgerController extends Controller
 
         return response()->json('Ledger Deleted Successfully');
     }
+
+    // app/Http/Controllers/LedgerController.php
+
+public function getReports(Request $request)
+{
+    $ledgerId = $request->ledgerId;
+    $subLedgerId = $request->subLedgerId;
+
+    $ledger = Ledger::find($ledgerId);
+    $subLedger = SubLedger::find($subLedgerId);
+
+    if (!$ledger || !$subLedger) {
+        return response()->json(['message' => 'Ledger or sub-ledger not found'], 404);
+    }
+
+    $ledgerReport = $this->generateLedgerReport($ledger);
+    $subLedgerReport = $this->generateSubLedgerReport($subLedger);
+
+    return response()->json(['ledgerReport' => $ledgerReport, 'subLedgerReport' => $subLedgerReport]);
+}
+
+private function generateLedgerReport(Ledger $ledger)
+{
+    $report = [
+        'ledgerId' => $ledger->ledgerId,
+        'name' => $ledger->name,
+        'ledgerTypeId' => $ledger->ledgerTypeId,
+        'isStudentFeeLedger' => $ledger->isStudentFeeLedger,
+        'isStudentRefundLedger' => $ledger->isStudentRefundLedger,
+        'transactions' => $this->getLedgerTransactions($ledger),
+    ];
+
+    return $report;
+}
+
+private function generateSubLedgerReport(SubLedger $subLedger)
+{
+    $report = [
+        'subLedgerId' => $subLedger->subLedgerId,
+        'name' => $subLedger->name,
+        'ledgerId' => $subLedger->ledgerId,
+        'transactions' => $this->getSubLedgerTransactions($subLedger),
+    ];
+
+    return $report;
+}
+
+private function getLedgerTransactions(Ledger $ledger)
+{
+    $transactions = Payment::where('ledgerId', $ledger->ledgerId)
+        ->with(['paymentMode', 'subLedger'])
+        ->get();
+
+    return $transactions;
+}
+
+private function getSubLedgerTransactions(SubLedger $subLedger)
+{
+    $transactions = Payment::where('subLedgerId', $subLedger->subLedgerId)
+        ->with(['paymentMode', 'ledger'])
+        ->get();
+
+    return $transactions;
+}
 }
