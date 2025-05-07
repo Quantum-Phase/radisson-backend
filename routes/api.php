@@ -16,6 +16,7 @@ use App\Http\Controllers\LedgerController;
 use App\Http\Controllers\LedgerTypeController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentModeController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SubLedgerController;
 use App\Http\Controllers\UserFeeDetailController;
 use Illuminate\Http\Request;
@@ -149,4 +150,7 @@ Route::group([
 
     //Route Certificate
     Route::post('/certificate/generate-pdf', [CertificateController::class, 'generatePDF'])->name('generatePDF');
+
+    //Route Report
+    Route::get('/report', [ReportController::class, 'index'])->name('index');
 });
