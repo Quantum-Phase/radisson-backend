@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ledger;
 use App\Models\SubLedger;
 use App\Models\Payment;
+use App\Models\PaymentMode;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,11 @@ class ReportController extends Controller
 
         $date = Carbon::parse($request->date) ?? Carbon::now();
         $ledgerId = $request->ledgerId;
+        // dd($ledgerId);
         $subLedgerId = $request->subLedgerId;
+        // dd($subLedgerId);   
+        $paymentModeId = $request->paymentModeId;
+
 
         // Get the ledger details
         $ledger = Ledger::findOrFail($ledgerId);
@@ -27,6 +32,9 @@ class ReportController extends Controller
         if ($subLedgerId) {
             $openingBalanceQuery->where('subLedgerId', $subLedgerId);
         }
+        if ($paymentModeId) {
+            $openingBalanceQuery->where('paymentModeId', $paymentModeId);
+        }
 
         $openingBalance = $openingBalanceQuery->sum('amount');
 
@@ -37,6 +45,10 @@ class ReportController extends Controller
 
         if ($subLedgerId) {
             $paymentsQuery->where('subLedgerId', $subLedgerId);
+        }
+
+        if ($paymentModeId) {
+            $paymentsQuery->where('paymentModeId', $paymentModeId);
         }
 
         $payments = $paymentsQuery->get();
@@ -99,6 +111,14 @@ class ReportController extends Controller
             $response['reportType'] = 'subledger';
         } else {
             $response['reportType'] = 'ledger';
+        }
+
+        if ($paymentModeId) {
+            $paymentMode = PaymentMode::findOrFail($paymentModeId);
+            $response['paymentMode'] = [
+                'id' => $paymentMode->paymentModeId,
+                'name' => $paymentMode->name
+            ];
         }
 
         return response()->json($response);
