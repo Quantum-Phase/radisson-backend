@@ -152,5 +152,6 @@ Route::group([
     Route::post('/certificate/generate-pdf', [CertificateController::class, 'generatePDF'])->name('generatePDF');
 
     //Route Report
-    Route::get('/report', [ReportController::class, 'index'])->name('index');
+    Route::get('/report/ledger', [ReportController::class, 'ledgerReport'])->name('ledgerReport');
+    Route::get('/report/payment-mode', [ReportController::class, 'paymentModeReport'])->name('paymentModeReport');
 });
